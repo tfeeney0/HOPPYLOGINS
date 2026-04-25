@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/utils/supabase/server";
 import { InboxList, type EmailRecord } from "./inbox-list";
@@ -8,41 +9,58 @@ type Profile = {
   role: string;
 };
 
+const DASHBOARD_PATH = "/dashboard";
+const LOGIN_PATH = "/login";
+
 async function signOut(): Promise<void> {
   "use server";
 
-  const supabase = await createServerClient();
-  await supabase.auth.signOut();
-  redirect("/login");
+  try {
+    const supabase = await createServerClient();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    revalidatePath(DASHBOARD_PATH);
+    revalidatePath(LOGIN_PATH);
+    redirect(LOGIN_PATH);
+  } catch {
+    revalidatePath(DASHBOARD_PATH);
+    revalidatePath(LOGIN_PATH);
+    redirect(`${LOGIN_PATH}?error=${encodeURIComponent("No se pudo cerrar sesion")}`);
+  }
 }
 
 export default async function DashboardPage() {
   const supabase = await createServerClient();
 
   const {
-    data: { user }
+    data: { user },
+    error: userError
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
+  if (userError || !user) {
+    redirect(LOGIN_PATH);
   }
 
   const [{ data: profile, error: profileError }, { data: emails, error: emailsError }] =
     await Promise.all([
       supabase.from("profiles").select("id, role").eq("id", user.id).maybeSingle<Profile>(),
-      supabase.from("emails").select("*").order("created_at", { ascending: false })
+      supabase
+        .from("emails")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .returns<EmailRecord[]>()
     ]);
 
-  if (profileError) {
-    throw new Error(`Could not load profile: ${profileError.message}`);
-  }
-
-  if (emailsError) {
-    throw new Error(`Could not load inbox emails: ${emailsError.message}`);
-  }
-
   const isAdmin = profile?.role === "admin";
-  const emailList = (emails ?? []) as EmailRecord[];
+  const emailList = emails ?? [];
+  const hasProfileWarning = Boolean(profileError);
+  const inboxErrorMessage = emailsError
+    ? "No se pudieron cargar los correos. Reintenta en unos segundos."
+    : null;
 
   return (
     <main className="min-h-svh bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
@@ -74,7 +92,27 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <InboxList emails={emailList} />
+        {hasProfileWarning && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+            No se pudo validar el perfil completo. Algunas funciones pueden verse
+            limitadas temporalmente.
+          </section>
+        )}
+
+        {inboxErrorMessage ? (
+          <section className="rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+            <h2 className="text-base font-semibold text-red-900">Error de carga</h2>
+            <p className="mt-2 text-sm text-red-700">{inboxErrorMessage}</p>
+            <Link
+              href={DASHBOARD_PATH}
+              className="mt-4 inline-flex rounded-md border border-red-300 px-3 py-2 text-xs font-medium text-red-800 transition-colors hover:bg-red-100"
+            >
+              Reintentar
+            </Link>
+          </section>
+        ) : (
+          <InboxList emails={emailList} />
+        )}
       </section>
     </main>
   );

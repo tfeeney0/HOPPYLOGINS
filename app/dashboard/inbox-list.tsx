@@ -4,18 +4,22 @@ import { useState } from "react";
 
 export type EmailRecord = {
   id: number;
-  sender: string;
-  recipient: string;
-  subject: string;
-  body_plain: string;
-  created_at: string;
+  sender: string | null;
+  recipient: string | null;
+  subject: string | null;
+  body_plain: string | null;
+  created_at: string | null;
 };
 
 type InboxListProps = {
   emails: EmailRecord[];
 };
 
-function formatFriendlyDate(value: string): string {
+function formatFriendlyDate(value: string | null): string {
+  if (!value) {
+    return "Sin fecha";
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "Sin fecha";
@@ -75,7 +79,7 @@ export function InboxList({ emails }: InboxListProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-900">
-                      {email.sender}
+                      {email.sender || "(Remitente desconocido)"}
                     </p>
                     <p className="mt-0.5 truncate text-sm text-slate-800">
                       {email.subject || "(Sin asunto)"}
@@ -89,7 +93,7 @@ export function InboxList({ emails }: InboxListProps) {
                 {isOpen && (
                   <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                      Para: {email.recipient}
+                      Para: {email.recipient || "(Sin destinatario)"}
                     </p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
                       {email.body_plain || "(Sin contenido)"}
