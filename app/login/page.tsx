@@ -45,16 +45,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessage = getErrorMessage(resolvedSearchParams);
 
   return (
-    <main className="relative min-h-svh bg-slate-50 px-4 py-8 sm:px-6">
-      <Link
-        href="/"
-        className="absolute left-4 top-4 inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 sm:left-8 sm:top-8"
-      >
-        <span aria-hidden="true">←</span>
-        <span>Volver al inicio</span>
-      </Link>
+    <main className="min-h-svh bg-slate-50 px-4 pb-8 pt-6 sm:px-6 sm:pt-8">
+      <div className="mx-auto w-full max-w-md pt-[max(0px,env(safe-area-inset-top))]">
+        <div className="mb-5 sm:mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800"
+          >
+            <span aria-hidden="true">←</span>
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
 
-      <section className="mx-auto w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold text-slate-900">Iniciar sesion</h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -112,7 +115,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Entrar
           </button>
         </form>
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

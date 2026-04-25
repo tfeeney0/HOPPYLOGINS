@@ -77,83 +77,85 @@ export function Navbar({ email, role }: NavbarProps) {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="shrink-0 text-sm font-semibold tracking-tight text-slate-900"
-          >
-            Hoppylogins
-          </Link>
-          <div className="hidden md:block">
-            <NavLinks items={navItems} pathname={pathname} />
-          </div>
-        </div>
-
-        <div className="hidden items-center gap-3 md:flex">
-          <div className="flex min-w-0 items-center gap-2">
-            <p className="max-w-[280px] truncate text-sm text-slate-700">{userEmail}</p>
-            <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${roleBadge.className}`}
+    <>
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="shrink-0 text-sm font-semibold tracking-tight text-slate-900"
             >
-              {roleBadge.label}
-            </span>
+              Hoppylogins
+            </Link>
+            <div className="hidden md:block">
+              <NavLinks items={navItems} pathname={pathname} />
+            </div>
           </div>
 
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="inline-flex h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
-            >
-              Cerrar Sesion
-            </button>
-          </form>
-        </div>
+          <div className="hidden items-center gap-3 md:flex">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="max-w-[280px] truncate text-sm text-slate-700">{userEmail}</p>
+              <span
+                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${roleBadge.className}`}
+              >
+                {roleBadge.label}
+              </span>
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((current) => !current)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
-          aria-expanded={mobileMenuOpen}
-          aria-controls="dashboard-mobile-menu"
-          aria-label={mobileMenuOpen ? "Cerrar menu" : "Abrir menu"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            className="h-6 w-6"
-            aria-hidden="true"
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+              >
+                Cerrar Sesion
+              </button>
+            </form>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((current) => !current)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="dashboard-mobile-menu"
+            aria-label={mobileMenuOpen ? "Cerrar menu" : "Abrir menu"}
           >
-            <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
-        </button>
-      </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              className="h-6 w-6"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
       {mobileMenuOpen && (
-        <div className="md:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden">
           <button
             type="button"
             aria-label="Cerrar menu"
-            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           <aside
             id="dashboard-mobile-menu"
-            className="fixed inset-y-0 right-0 z-50 flex w-64 flex-col bg-white shadow-2xl"
+            className="absolute inset-y-0 right-0 flex w-[22rem] max-w-[92vw] flex-col border-l border-slate-200 bg-white shadow-2xl"
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-              <p className="text-sm font-semibold text-slate-900">Menu</p>
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <p className="text-base font-semibold text-slate-900">Menu</p>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
                 aria-label="Cerrar menu"
               >
                 <svg
@@ -170,8 +172,8 @@ export function Navbar({ email, role }: NavbarProps) {
               </button>
             </div>
 
-            <div className="flex h-full flex-col px-4 py-4">
-              <nav className="space-y-1">
+            <div className="flex h-full flex-col px-5 py-5">
+              <nav className="space-y-2">
                 {navItems.map((item) => {
                   const active = isPathActive(pathname, item.href);
 
@@ -181,7 +183,7 @@ export function Navbar({ email, role }: NavbarProps) {
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={[
-                        "block rounded-md px-3 py-2 text-sm font-medium",
+                        "block rounded-md px-3 py-2.5 text-base font-medium",
                         active
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100"
@@ -193,7 +195,7 @@ export function Navbar({ email, role }: NavbarProps) {
                 })}
               </nav>
 
-              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <p className="truncate text-sm text-slate-700">{userEmail}</p>
                 <span
                   className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${roleBadge.className}`}
@@ -202,10 +204,10 @@ export function Navbar({ email, role }: NavbarProps) {
                 </span>
               </div>
 
-              <form action={signOut} className="mt-auto pt-5">
+              <form action={signOut} className="mt-auto pt-6">
                 <button
                   type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
                 >
                   Cerrar Sesion
                 </button>
@@ -214,6 +216,6 @@ export function Navbar({ email, role }: NavbarProps) {
           </aside>
         </div>
       )}
-    </header>
+    </>
   );
 }
