@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { createClient, type User } from "@supabase/supabase-js";
 import { createServerClient } from "@/utils/supabase/server";
 import { AdminPanel, type AccessRuleRecord, type AdminPanelUser } from "./admin-panel";
 
@@ -24,10 +25,68 @@ type AdminPageData = {
   fetchError: string | null;
 };
 
+type AuthUserRecord = {
+  id: string;
+  email: string | null;
+};
+
+function getServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+
+async function listAllAuthUsers(): Promise<AuthUserRecord[]> {
+  const serviceRoleClient = getServiceRoleClient();
+  const allUsers: AuthUserRecord[] = [];
+  const perPage = 1000;
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await serviceRoleClient.auth.admin.listUsers({
+      page,
+      perPage
+    });
+
+    if (error) {
+      throw new Error(`No se pudieron cargar usuarios de auth: ${error.message}`);
+    }
+
+    const users: User[] = data.users ?? [];
+    for (const user of users) {
+      allUsers.push({
+        id: user.id,
+        email: user.email ?? null
+      });
+    }
+
+    if (users.length < perPage) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return allUsers;
+}
+
 function buildUsersWithRules(
+  authUsers: AuthUserRecord[],
   profiles: ProfileRow[],
   accessRules: AccessRuleRow[]
 ): AdminPanelUser[] {
+  const authById = new Map(authUsers.map((user) => [user.id, user]));
+  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
   const rulesByUserId = new Map<string, AccessRuleRecord[]>();
 
   for (const rule of accessRules) {
@@ -42,25 +101,34 @@ function buildUsersWithRules(
     rulesByUserId.set(rule.user_id, currentRules);
   }
 
-  const users: AdminPanelUser[] = profiles.map((profile) => ({
-    id: profile.id,
-    role: profile.role ?? "user",
-    rules: (rulesByUserId.get(profile.id) ?? []).sort((left, right) => right.id - left.id)
-  }));
-
-  const profileIds = new Set(profiles.map((profile) => profile.id));
-
-  for (const [userId, rules] of rulesByUserId.entries()) {
-    if (!profileIds.has(userId)) {
-      users.push({
-        id: userId,
-        role: "unknown",
-        rules: [...rules].sort((left, right) => right.id - left.id)
-      });
-    }
+  const userIds = new Set<string>();
+  for (const authUser of authUsers) {
+    userIds.add(authUser.id);
+  }
+  for (const profile of profiles) {
+    userIds.add(profile.id);
+  }
+  for (const userId of rulesByUserId.keys()) {
+    userIds.add(userId);
   }
 
-  return users.sort((left, right) => left.id.localeCompare(right.id, "en"));
+  const users: AdminPanelUser[] = Array.from(userIds).map((userId) => {
+    const authUser = authById.get(userId);
+    const profile = profileById.get(userId);
+
+    return {
+      id: userId,
+      email: authUser?.email ?? null,
+      role: profile?.role ?? "user",
+      rules: (rulesByUserId.get(userId) ?? []).sort((left, right) => right.id - left.id)
+    };
+  });
+
+  return users.sort((left, right) => {
+    const leftLabel = left.email ?? left.id;
+    const rightLabel = right.email ?? right.id;
+    return leftLabel.localeCompare(rightLabel, "es");
+  });
 }
 
 async function getAdminPageData(): Promise<AdminPageData> {
@@ -89,6 +157,17 @@ async function getAdminPageData(): Promise<AdminPageData> {
     redirect(DASHBOARD_PATH);
   }
 
+  let authUsers: AuthUserRecord[] = [];
+  let authUsersError: string | null = null;
+
+  try {
+    authUsers = await listAllAuthUsers();
+  } catch (error) {
+    const fallbackMessage =
+      error instanceof Error ? error.message : "No se pudieron cargar usuarios de auth.";
+    authUsersError = fallbackMessage;
+  }
+
   const [{ data: profiles, error: profilesError }, { data: rules, error: rulesError }] =
     await Promise.all([
       supabase.from("profiles").select("id, role").returns<ProfileRow[]>().order("id"),
@@ -99,12 +178,15 @@ async function getAdminPageData(): Promise<AdminPageData> {
         .order("id", { ascending: false })
     ]);
 
-  const fetchError = profilesError || rulesError
-    ? "No se pudo cargar toda la informacion de administracion."
-    : null;
+  const errors = [profilesError?.message, rulesError?.message, authUsersError].filter(
+    (value): value is string => Boolean(value)
+  );
+
+  const fetchError =
+    errors.length > 0 ? "No se pudo cargar toda la informacion de administracion." : null;
 
   return {
-    users: buildUsersWithRules(profiles ?? [], rules ?? []),
+    users: buildUsersWithRules(authUsers, profiles ?? [], rules ?? []),
     fetchError
   };
 }

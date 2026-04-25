@@ -15,6 +15,7 @@ export type AccessRuleRecord = {
 
 export type AdminPanelUser = {
   id: string;
+  email: string | null;
   role: string;
   rules: AccessRuleRecord[];
 };
@@ -116,7 +117,7 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
             </option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
-                {user.id} ({user.role})
+                {user.email ?? user.id} ({user.role})
               </option>
             ))}
           </select>
@@ -193,6 +194,7 @@ function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolea
 }
 
 type RuleRow = AccessRuleRecord & {
+  user_email: string | null;
   user_role: string;
 };
 
@@ -201,6 +203,7 @@ function toRuleRows(users: AdminPanelUser[]): RuleRow[] {
     .flatMap((user) =>
       user.rules.map((rule) => ({
         ...rule,
+        user_email: user.email,
         user_role: user.role
       }))
     )
@@ -233,7 +236,7 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
             <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-3 py-2 font-medium">User ID</th>
+                  <th className="px-3 py-2 font-medium">Usuario (Email)</th>
                   <th className="px-3 py-2 font-medium">Rol</th>
                   <th className="px-3 py-2 font-medium">Reglas Activas</th>
                   <th className="px-3 py-2 font-medium">Reglas Inactivas</th>
@@ -247,7 +250,12 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
 
                   return (
                     <tr key={user.id} className="border-b border-slate-100 text-sm text-slate-700">
-                      <td className="px-3 py-3 font-mono text-xs sm:text-sm">{user.id}</td>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-medium text-slate-800">{user.email ?? user.id}</p>
+                        {user.email && (
+                          <p className="font-mono text-xs text-slate-500">{user.id}</p>
+                        )}
+                      </td>
                       <td className="px-3 py-3">{user.role}</td>
                       <td className="px-3 py-3">{activeRules}</td>
                       <td className="px-3 py-3">{inactiveRules}</td>
@@ -279,7 +287,7 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-3 py-2 font-medium">Rule ID</th>
-                  <th className="px-3 py-2 font-medium">User ID</th>
+                  <th className="px-3 py-2 font-medium">Usuario (Email)</th>
                   <th className="px-3 py-2 font-medium">Rol</th>
                   <th className="px-3 py-2 font-medium">Prefix</th>
                   <th className="px-3 py-2 font-medium">Expiracion</th>
@@ -291,7 +299,14 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
                 {rules.map((rule) => (
                   <tr key={rule.id} className="border-b border-slate-100 text-sm text-slate-700">
                     <td className="px-3 py-3 font-mono">{rule.id}</td>
-                    <td className="px-3 py-3 font-mono text-xs sm:text-sm">{rule.user_id}</td>
+                    <td className="px-3 py-3">
+                      <p className="text-sm font-medium text-slate-800">
+                        {rule.user_email ?? rule.user_id}
+                      </p>
+                      {rule.user_email && (
+                        <p className="font-mono text-xs text-slate-500">{rule.user_id}</p>
+                      )}
+                    </td>
                     <td className="px-3 py-3">{rule.user_role}</td>
                     <td className="px-3 py-3">{rule.recipient_prefix}</td>
                     <td className="px-3 py-3">{formatExpirationLabel(rule.expires_at)}</td>
