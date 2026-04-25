@@ -27,7 +27,7 @@ export default async function HomePage() {
   const primaryCta = await getPrimaryCta();
 
   return (
-    <div className="min-h-svh bg-gradient-to-b from-white to-slate-50 text-slate-900">
+    <div className="flex min-h-dvh flex-col bg-gradient-to-b from-white to-slate-50 text-slate-900">
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="text-sm font-semibold tracking-tight text-slate-900">
@@ -42,11 +42,8 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <main>
-        <section
-          id="caracteristicas"
-          className="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 sm:py-24 lg:py-28"
-        >
+      <main className="flex-1">
+        <section className="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24">
           <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
             Seguridad y control para equipos modernos
           </span>
@@ -73,6 +70,21 @@ export default async function HomePage() {
             >
               Saber mas
             </Link>
+          </div>
+        </section>
+
+        <section
+          id="caracteristicas"
+          className="mx-auto w-full max-w-6xl scroll-mt-24 px-4 pb-16 sm:px-6 sm:pb-20"
+        >
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Control granular en minutos
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+              Asigna accesos temporales, revoca permisos en tiempo real y manten la
+              operacion segura con politicas RLS gestionadas desde una interfaz simple.
+            </p>
           </div>
         </section>
       </main>
