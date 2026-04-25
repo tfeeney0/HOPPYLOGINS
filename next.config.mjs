@@ -1,44 +1,11 @@
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import withPWAInit from "@ducanh2912/next-pwa";
 
-const require = createRequire(import.meta.url);
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
-const withPWA = require("next-pwa")({
+
+const withPWA = withPWAInit({
   dest: "public",
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
-  buildExcludes: [/middleware-manifest\.json$/],
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-      handler: "NetworkOnly",
-      options: {
-        cacheName: "supabase-api"
-      }
-    },
-    {
-      urlPattern: ({ request }) => request.destination === "image",
-      handler: "CacheFirst",
-      options: {
-        cacheName: "images",
-        expiration: {
-          maxEntries: 80,
-          maxAgeSeconds: 60 * 60 * 24 * 30
-        }
-      }
-    },
-    {
-      urlPattern: ({ request }) =>
-        request.destination === "script" ||
-        request.destination === "style" ||
-        request.destination === "worker",
-      handler: "StaleWhileRevalidate",
-      options: {
-        cacheName: "static-resources"
-      }
-    }
-  ]
+  disable: process.env.NODE_ENV === "development"
 });
 
 /** @type {import('next').NextConfig} */

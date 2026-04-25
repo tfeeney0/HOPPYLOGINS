@@ -2,9 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-const appName = "HoppyLogins Mail Manager";
-const appDescription =
-  "Aplicacion profesional para gestionar correos, sesiones y flujos de autenticacion.";
+const appName = "Hoppylogins";
+const appDescription = "Buzón de correos seguro con acceso granular";
 
 export const metadata: Metadata = {
   applicationName: appName,
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: appName,
+    title: "Hoppy",
     statusBarStyle: "default"
   },
   formatDetection: {

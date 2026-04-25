@@ -1,32 +1,23 @@
 {
-  "name": "HoppyLogins Mail Manager",
-  "short_name": "Mail Manager",
-  "description": "Aplicacion profesional para gestion de correos, sesiones y autenticacion.",
+  "name": "Hoppylogins",
+  "short_name": "Hoppy",
+  "description": "Buzón de correos seguro con acceso granular",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
   "theme_color": "#0f172a",
-  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/maskable-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
 }
