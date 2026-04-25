@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+}
+
 :root {
   color-scheme: light;
   --background: #f8fafc;
