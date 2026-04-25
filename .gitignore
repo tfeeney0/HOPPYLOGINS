@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+dist
+build
+.env*.local
+.env
+*.tsbuildinfo
+next-env.d.ts
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
+public/fallback-*.js
+.DS_Store

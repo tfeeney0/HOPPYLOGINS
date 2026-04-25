@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HoppyLogins Mail Manager">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <rect x="96" y="144" width="320" height="224" rx="34" fill="#f8fafc"/>
+  <path d="M124 178l116 92c10 8 22 8 32 0l116-92" fill="none" stroke="#0f766e" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M150 336h212" stroke="#94a3b8" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="368" cy="146" r="52" fill="#14b8a6"/>
+  <path d="M345 146l16 16 31-35" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
