@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { createAccessRule, revokeAccessRule } from "./actions";
+import { adminCreateUser, createAccessRule, revokeAccessRule } from "./actions";
 import type { AdminActionState } from "./actions";
 
 export type AccessRuleRecord = {
@@ -171,6 +171,60 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
   );
 }
 
+function CreateUserForm() {
+  const [state, formAction] = useActionState(adminCreateUser, INITIAL_ACTION_STATE);
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="new_user_email" className="mb-1 block text-sm font-medium text-slate-700">
+            Email
+          </label>
+          <input
+            id="new_user_email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="usuario@empresa.com"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="new_user_password"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Contrasena
+          </label>
+          <input
+            id="new_user_password"
+            name="password"
+            type="password"
+            required
+            autoComplete="new-password"
+            minLength={8}
+            placeholder="Minimo 8 caracteres"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SubmitButton
+          label="Crear Usuario"
+          pendingLabel="Creando..."
+          className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        />
+      </div>
+
+      <FeedbackMessage state={state} />
+    </form>
+  );
+}
+
 function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolean }) {
   const [state, formAction] = useActionState(revokeAccessRule, INITIAL_ACTION_STATE);
 
@@ -225,6 +279,13 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
           {fetchError}
         </section>
       )}
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h2 className="text-lg font-semibold text-slate-900">Crear Nuevo Usuario</h2>
+        <div className="mt-4">
+          <CreateUserForm />
+        </div>
+      </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-slate-900">Usuarios</h2>

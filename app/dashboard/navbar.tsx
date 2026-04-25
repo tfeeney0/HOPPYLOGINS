@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { signOut } from "./actions";
 
 type NavbarRole = "admin" | "user";
@@ -65,9 +65,47 @@ function NavLinks({ items, pathname }: { items: NavItem[]; pathname: string }) {
   );
 }
 
+function RefreshButton({
+  loading,
+  onRefresh,
+  compact = false
+}: {
+  loading: boolean;
+  onRefresh: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onRefresh}
+      disabled={loading}
+      className={[
+        "inline-flex items-center justify-center rounded-md border border-slate-300 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70",
+        compact ? "h-10 w-10" : "h-9 gap-2 px-3"
+      ].join(" ")}
+      aria-label="Refrescar"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12a8 8 0 10-2.34 5.66M20 4v8h-8" />
+      </svg>
+      {!compact && <span>{loading ? "Cargando..." : "Refrescar"}</span>}
+    </button>
+  );
+}
+
 export function Navbar({ email, role }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isRefreshing, startRefreshTransition] = useTransition();
   const roleBadge = getRoleBadge(role);
   const userEmail = email ?? "Usuario sin email";
 
@@ -96,6 +134,12 @@ export function Navbar({ email, role }: NavbarProps) {
     };
   }, [mobileMenuOpen]);
 
+  function handleRefresh() {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -121,6 +165,8 @@ export function Navbar({ email, role }: NavbarProps) {
                 {roleBadge.label}
               </span>
             </div>
+
+            <RefreshButton loading={isRefreshing} onRefresh={handleRefresh} />
 
             <form action={signOut}>
               <button
@@ -231,7 +277,11 @@ export function Navbar({ email, role }: NavbarProps) {
               </span>
             </div>
 
-            <form action={signOut} className="mt-auto pt-6">
+            <div className="mt-4">
+              <RefreshButton loading={isRefreshing} onRefresh={handleRefresh} />
+            </div>
+
+            <form action={signOut} className="mt-auto pt-4">
               <button
                 type="submit"
                 className="inline-flex h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"

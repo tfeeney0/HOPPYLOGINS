@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@/utils/supabase/server";
 
 const ADMIN_ROLE = "admin";
 const ADMIN_DASHBOARD_PATH = "/dashboard/admin";
+const MIN_PASSWORD_LENGTH = 8;
 
 type ProfileRow = {
   id: string;
@@ -30,6 +32,10 @@ function normalizeFormValue(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function parseExpirationDateTime(rawValue: string): {
   isoValue: string | null;
   errorMessage: string | null;
@@ -44,6 +50,22 @@ function parseExpirationDateTime(rawValue: string): {
   }
 
   return { isoValue: parsedDate.toISOString(), errorMessage: null };
+}
+
+function getServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
 }
 
 async function requireAdminSession(): Promise<AdminGuardResult> {
@@ -84,6 +106,68 @@ async function requireAdminSession(): Promise<AdminGuardResult> {
   return {
     ok: true,
     supabase
+  };
+}
+
+export async function adminCreateUser(
+  _prevState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  const adminSession = await requireAdminSession();
+  if (!adminSession.ok) {
+    return { status: "error", message: adminSession.message };
+  }
+
+  const email = normalizeFormValue(formData.get("email")).toLowerCase();
+  const password = normalizeFormValue(formData.get("password"));
+
+  if (!email || !password) {
+    return {
+      status: "error",
+      message: "Debes completar email y contrasena."
+    };
+  }
+
+  if (!isValidEmail(email)) {
+    return {
+      status: "error",
+      message: "El email no tiene un formato valido."
+    };
+  }
+
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      status: "error",
+      message: `La contrasena debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`
+    };
+  }
+
+  try {
+    const serviceRoleClient = getServiceRoleClient();
+    const { error } = await serviceRoleClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (error) {
+      return {
+        status: "error",
+        message: `No se pudo crear el usuario: ${error.message}`
+      };
+    }
+  } catch {
+    return {
+      status: "error",
+      message: "Error inesperado al crear el usuario."
+    };
+  }
+
+  revalidatePath(ADMIN_DASHBOARD_PATH);
+
+  return {
+    status: "success",
+    message: "Usuario creado correctamente."
   };
 }
 
