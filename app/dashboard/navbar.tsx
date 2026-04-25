@@ -114,57 +114,104 @@ export function Navbar({ email, role }: NavbarProps) {
         <button
           type="button"
           onClick={() => setMobileMenuOpen((current) => !current)}
-          className="inline-flex h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
           aria-expanded={mobileMenuOpen}
           aria-controls="dashboard-mobile-menu"
+          aria-label={mobileMenuOpen ? "Cerrar menu" : "Abrir menu"}
         >
-          Menu
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="h-6 w-6"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
         </button>
       </div>
 
       {mobileMenuOpen && (
-        <div id="dashboard-mobile-menu" className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
-          <div className="space-y-3">
-            <nav className="flex flex-col">
-              {navItems.map((item) => {
-                const active = isPathActive(pathname, item.href);
+        <div className="md:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar menu"
+            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+          />
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={[
-                      "rounded-md px-3 py-2 text-sm font-medium",
-                      active
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100"
-                    ].join(" ")}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="truncate text-sm text-slate-700">{userEmail}</p>
-              <span
-                className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${roleBadge.className}`}
+          <aside
+            id="dashboard-mobile-menu"
+            className="fixed inset-y-0 right-0 z-50 flex w-64 flex-col bg-white shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-900">Menu</p>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
+                aria-label="Cerrar menu"
               >
-                {roleBadge.label}
-              </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
             </div>
 
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-              >
-                Cerrar Sesion
-              </button>
-            </form>
-          </div>
+            <div className="flex h-full flex-col px-4 py-4">
+              <nav className="space-y-1">
+                {navItems.map((item) => {
+                  const active = isPathActive(pathname, item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={[
+                        "block rounded-md px-3 py-2 text-sm font-medium",
+                        active
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="truncate text-sm text-slate-700">{userEmail}</p>
+                <span
+                  className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${roleBadge.className}`}
+                >
+                  {roleBadge.label}
+                </span>
+              </div>
+
+              <form action={signOut} className="mt-auto pt-5">
+                <button
+                  type="submit"
+                  className="inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  Cerrar Sesion
+                </button>
+              </form>
+            </div>
+          </aside>
         </div>
       )}
     </header>
