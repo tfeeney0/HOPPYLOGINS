@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { signOut } from "./actions";
 
 type NavbarRole = "admin" | "user";
@@ -101,6 +102,36 @@ function RefreshButton({
   );
 }
 
+function SignOutButton({ className }: { className: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" disabled={pending} className={className}>
+      <span className="inline-flex items-center gap-2">
+        {pending && (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-4 w-4 animate-spin"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" className="opacity-25" stroke="currentColor" strokeWidth="3" />
+            <path
+              d="M21 12a9 9 0 00-9-9"
+              className="opacity-90"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
+        <span>{pending ? "Cerrando..." : "Cerrar Sesion"}</span>
+      </span>
+    </button>
+  );
+}
+
 export function Navbar({ email, role }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -169,12 +200,7 @@ export function Navbar({ email, role }: NavbarProps) {
             <RefreshButton loading={isRefreshing} onRefresh={handleRefresh} />
 
             <form action={signOut}>
-              <button
-                type="submit"
-                className="inline-flex h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
-              >
-                Cerrar Sesion
-              </button>
+              <SignOutButton className="inline-flex h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2" />
             </form>
           </div>
 
@@ -282,12 +308,7 @@ export function Navbar({ email, role }: NavbarProps) {
             </div>
 
             <form action={signOut} className="mt-auto pt-4">
-              <button
-                type="submit"
-                className="inline-flex h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
-              >
-                Cerrar Sesion
-              </button>
+              <SignOutButton className="inline-flex h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100" />
             </form>
           </div>
         </aside>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/utils/supabase/server";
+import { LoginSubmitButton } from "./login-submit-button";
 
 type LoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -108,12 +109,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
-          >
-            Entrar
-          </button>
+          <LoginSubmitButton />
         </form>
         </section>
       </div>
