@@ -238,7 +238,7 @@ export async function adminCreateUser(
 
   try {
     const serviceRoleClient = getServiceRoleClient();
-    const { error } = await serviceRoleClient.auth.admin.createUser({
+    const { data, error } = await serviceRoleClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true
@@ -248,6 +248,26 @@ export async function adminCreateUser(
       return {
         status: "error",
         message: `No se pudo crear el usuario: ${error.message}`
+      };
+    }
+
+    const createdUserId = data.user?.id;
+    if (!createdUserId) {
+      return {
+        status: "error",
+        message: "No se pudo obtener el ID del usuario creado en Auth."
+      };
+    }
+
+    const { error: profileInsertError } = await serviceRoleClient
+      .from("profiles")
+      .insert({ id: createdUserId, role: "user" });
+
+    if (profileInsertError) {
+      return {
+        status: "error",
+        message:
+          "Se creó el usuario en Auth, pero falló la creación del perfil."
       };
     }
   } catch {
