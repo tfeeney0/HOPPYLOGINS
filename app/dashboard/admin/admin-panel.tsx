@@ -330,6 +330,8 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
           <nav className="-mb-px flex items-center gap-1" aria-label="Tabs de reglas de acceso">
             <Link
               href="?tab=active"
+              scroll={false}
+              replace
               className={
                 activeTab === "active"
                   ? "inline-flex items-center border-b-2 border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700"
@@ -340,6 +342,8 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
             </Link>
             <Link
               href="?tab=inactive"
+              scroll={false}
+              replace
               className={
                 activeTab === "inactive"
                   ? "inline-flex items-center border-b-2 border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700"
