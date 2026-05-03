@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminCreateUser, createAccessRule, revokeAccessRule } from "./actions";
 import type { AdminActionState } from "./actions";
@@ -39,6 +39,24 @@ const INITIAL_ACTION_STATE: AdminActionState = {
   status: "idle",
   message: ""
 };
+
+function getLocalDateTimeMinValue(date: Date): string {
+  const localTime = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localTime.toISOString().slice(0, 16);
+}
+
+function isExpiredDate(expiresAt: string | null, nowTimestamp: number): boolean {
+  if (!expiresAt) {
+    return false;
+  }
+
+  const parsedDate = new Date(expiresAt);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return false;
+  }
+
+  return parsedDate.getTime() <= nowTimestamp;
+}
 
 function formatExpirationLabel(value: string | null): string {
   if (!value) {
@@ -106,6 +124,11 @@ function SubmitButton({
 function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
   const [state, formAction] = useActionState(createAccessRule, INITIAL_ACTION_STATE);
   const hasUsers = users.length > 0;
+  const [minExpiresAt, setMinExpiresAt] = useState<string>("");
+
+  useEffect(() => {
+    setMinExpiresAt(getLocalDateTimeMinValue(new Date()));
+  }, []);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -160,6 +183,7 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
             id="expires_at"
             name="expires_at"
             type="datetime-local"
+            min={minExpiresAt || undefined}
             disabled={!hasUsers}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100"
           />
@@ -261,6 +285,7 @@ function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolea
 }
 
 export function AdminPanel({ users, filteredRules, activeTab, fetchError }: AdminPanelProps) {
+  const nowTimestamp = Date.now();
 
   return (
     <section className="space-y-6">
@@ -375,36 +400,44 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
                 </tr>
               </thead>
               <tbody>
-                {filteredRules.map((rule) => (
-                  <tr key={rule.id} className="border-b border-slate-100 text-sm text-slate-700">
-                    <td className="px-3 py-3 font-mono">{rule.id}</td>
-                    <td className="px-3 py-3">
-                      <p className="text-sm font-medium text-slate-800">
-                        {rule.user_email ?? rule.user_id}
-                      </p>
-                      {rule.user_email && (
-                        <p className="font-mono text-xs text-slate-500">{rule.user_id}</p>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">{rule.user_role}</td>
-                    <td className="px-3 py-3">{rule.recipient_prefix}</td>
-                    <td className="px-3 py-3">{formatExpirationLabel(rule.expires_at)}</td>
-                    <td className="px-3 py-3">
-                      {rule.is_active ? (
-                        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                          Activa
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
-                          Inactiva
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <RevokeRuleForm ruleId={rule.id} isActive={rule.is_active} />
-                    </td>
-                  </tr>
-                ))}
+                {filteredRules.map((rule) => {
+                  const ruleIsExpired = rule.is_active && isExpiredDate(rule.expires_at, nowTimestamp);
+
+                  return (
+                    <tr key={rule.id} className="border-b border-slate-100 text-sm text-slate-700">
+                      <td className="px-3 py-3 font-mono">{rule.id}</td>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-medium text-slate-800">
+                          {rule.user_email ?? rule.user_id}
+                        </p>
+                        {rule.user_email && (
+                          <p className="font-mono text-xs text-slate-500">{rule.user_id}</p>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">{rule.user_role}</td>
+                      <td className="px-3 py-3">{rule.recipient_prefix}</td>
+                      <td className="px-3 py-3">{formatExpirationLabel(rule.expires_at)}</td>
+                      <td className="px-3 py-3">
+                        {ruleIsExpired ? (
+                          <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
+                            Expirada
+                          </span>
+                        ) : rule.is_active ? (
+                          <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                            Activa
+                          </span>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            Inactiva
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <RevokeRuleForm ruleId={rule.id} isActive={rule.is_active} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

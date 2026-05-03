@@ -89,6 +89,9 @@ function normalizeOptionalDate(value: FormDataEntryValue | null): string | null 
   if (Number.isNaN(parsedDate.getTime())) {
     throw new Error("La fecha de expiración es inválida");
   }
+  if (parsedDate.getTime() < Date.now()) {
+    throw new Error("La fecha de expiración no puede estar en el pasado.");
+  }
 
   return parsedDate.toISOString();
 }

@@ -212,12 +212,28 @@ async function getAdminPageData(): Promise<AdminPageData> {
 }
 
 function buildFilteredRuleRows(users: AdminPanelUser[], activeTab: AccessRuleTab): AccessRuleTableRow[] {
-  const targetIsActive = activeTab === "active";
+  const now = Date.now();
+
+  function isExpired(expiresAt: string | null): boolean {
+    if (!expiresAt) {
+      return false;
+    }
+
+    const parsedDate = new Date(expiresAt);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return false;
+    }
+
+    return parsedDate.getTime() <= now;
+  }
 
   return users
     .flatMap((user) =>
       user.rules
-        .filter((rule) => rule.is_active === targetIsActive)
+        .filter((rule) => {
+          const ruleIsInactive = !rule.is_active || isExpired(rule.expires_at);
+          return activeTab === "active" ? !ruleIsInactive : ruleIsInactive;
+        })
         .map((rule) => ({
           ...rule,
           user_email: user.email,
