@@ -2,11 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
-import {
-  createDynamicRoute,
-  deleteDynamicRoute,
-  type MailgunRouteResponse
-} from "@/src/lib/mailgun-routes";
 import { createServerClient } from "@/utils/supabase/server";
 
 const ADMIN_ROLE = "admin";
@@ -23,26 +18,14 @@ type AccessRuleRow = {
   id: number;
   user_id: string;
   recipient_prefix: string;
-  mailgun_route_id: string | null;
   is_active: boolean;
 };
 
 type AccessRuleLookupRow = {
   id: number;
-  mailgun_route_id: string | null;
-};
-
-type RouteClient = {
-  createDynamicRoute: (prefix: string) => Promise<MailgunRouteResponse>;
-  deleteDynamicRoute: (routeId: string) => Promise<MailgunRouteResponse>;
 };
 
 type AdminSupabaseClient = Awaited<ReturnType<typeof createServerClient>>;
-
-const defaultRouteClient: RouteClient = {
-  createDynamicRoute,
-  deleteDynamicRoute
-};
 
 export type AdminActionState = {
   status: "idle" | "success" | "error";
@@ -140,89 +123,40 @@ async function requireAdminSupabaseClient(): Promise<AdminSupabaseClient> {
   return supabase;
 }
 
-function extractMailgunRouteId(response: MailgunRouteResponse): string {
-  const routeId = response.route?.id?.trim();
-
-  if (!routeId) {
-    throw new Error("Mailgun no devolvio un routeId valido.");
-  }
-
-  return routeId;
-}
-
 async function grantAccessWithClient(
   supabase: AdminSupabaseClient,
   userId: string,
-  prefix: string,
-  routeClient: RouteClient
+  prefix: string
 ): Promise<AccessRuleRow> {
   const normalizedUserId = normalizeRequiredText(userId, "user_id");
   const normalizedPrefix = normalizePrefix(prefix);
 
-  const { data: existingRoute, error: existingRouteError } = await supabase
+  const { data, error } = await supabase
     .from("access_rules")
-    .select("mailgun_route_id")
-    .eq("recipient_prefix", normalizedPrefix)
-    .not("mailgun_route_id", "is", null)
-    .limit(1)
-    .maybeSingle<{ mailgun_route_id: string | null }>();
+    .insert({
+      user_id: normalizedUserId,
+      recipient_prefix: normalizedPrefix,
+      is_active: true
+    })
+    .select("id, user_id, recipient_prefix, is_active")
+    .single<AccessRuleRow>();
 
-  if (existingRouteError) {
-    throw new Error(`No se pudo validar la ruta existente: ${existingRouteError.message}`);
+  if (error || !data) {
+    throw new Error(error?.message ?? "No se pudo crear la regla de acceso.");
   }
 
-  const existingRouteId = existingRoute?.mailgun_route_id?.trim() ?? "";
-  let routeId = existingRouteId;
-  let wasRouteCreated = false;
-
-  if (!routeId) {
-    const createdRoute = await routeClient.createDynamicRoute(normalizedPrefix);
-    routeId = extractMailgunRouteId(createdRoute);
-    wasRouteCreated = true;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("access_rules")
-      .insert({
-        user_id: normalizedUserId,
-        recipient_prefix: normalizedPrefix,
-        mailgun_route_id: routeId,
-        is_active: true
-      })
-      .select("id, user_id, recipient_prefix, mailgun_route_id, is_active")
-      .single<AccessRuleRow>();
-
-    if (error || !data) {
-      throw new Error(error?.message ?? "No se pudo crear la regla de acceso.");
-    }
-
-    return data;
-  } catch (insertError: unknown) {
-    if (wasRouteCreated) {
-      try {
-        await routeClient.deleteDynamicRoute(routeId);
-      } catch (rollbackError: unknown) {
-        const rollbackReason =
-          rollbackError instanceof Error ? rollbackError.message : "Error desconocido";
-        console.error(`Rollback Mailgun fallido para routeId ${routeId}: ${rollbackReason}`);
-      }
-    }
-
-    throw insertError;
-  }
+  return data;
 }
 
 async function revokeAccessWithClient(
   supabase: AdminSupabaseClient,
-  ruleId: string,
-  routeClient: RouteClient
+  ruleId: string
 ): Promise<AccessRuleLookupRow> {
   const normalizedRuleId = normalizeRuleId(ruleId);
 
   const { data: currentRule, error: fetchError } = await supabase
     .from("access_rules")
-    .select("id, mailgun_route_id")
+    .select("id")
     .eq("id", normalizedRuleId)
     .maybeSingle<AccessRuleLookupRow>();
 
@@ -238,7 +172,7 @@ async function revokeAccessWithClient(
     .from("access_rules")
     .update({ is_active: false })
     .eq("id", normalizedRuleId)
-    .select("id, mailgun_route_id")
+    .select("id")
     .single<AccessRuleLookupRow>();
 
   if (updateError || !updatedRule) {
@@ -250,14 +184,14 @@ async function revokeAccessWithClient(
 
 export async function grantAccess(userId: string, prefix: string): Promise<AccessRuleRow> {
   const supabase = await requireAdminSupabaseClient();
-  const createdRule = await grantAccessWithClient(supabase, userId, prefix, defaultRouteClient);
+  const createdRule = await grantAccessWithClient(supabase, userId, prefix);
   revalidatePath(ADMIN_DASHBOARD_PATH);
   return createdRule;
 }
 
 export async function revokeAccess(ruleId: string): Promise<AccessRuleLookupRow> {
   const supabase = await requireAdminSupabaseClient();
-  const revokedRule = await revokeAccessWithClient(supabase, ruleId, defaultRouteClient);
+  const revokedRule = await revokeAccessWithClient(supabase, ruleId);
   revalidatePath(ADMIN_DASHBOARD_PATH);
   return revokedRule;
 }
