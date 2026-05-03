@@ -2,15 +2,46 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
+import {
+  createDynamicRoute,
+  deleteDynamicRoute,
+  type MailgunRouteResponse
+} from "@/src/lib/mailgun-routes";
 import { createServerClient } from "@/utils/supabase/server";
 
 const ADMIN_ROLE = "admin";
 const ADMIN_DASHBOARD_PATH = "/dashboard/admin";
 const MIN_PASSWORD_LENGTH = 8;
+const MAX_PREFIX_LENGTH = 120;
 
 type ProfileRow = {
   id: string;
   role: string | null;
+};
+
+type AccessRuleRow = {
+  id: number;
+  user_id: string;
+  recipient_prefix: string;
+  mailgun_route_id: string | null;
+  is_active: boolean;
+};
+
+type AccessRuleLookupRow = {
+  id: number;
+  mailgun_route_id: string | null;
+};
+
+type RouteClient = {
+  createDynamicRoute: (prefix: string) => Promise<MailgunRouteResponse>;
+  deleteDynamicRoute: (routeId: string) => Promise<MailgunRouteResponse>;
+};
+
+type AdminSupabaseClient = Awaited<ReturnType<typeof createServerClient>>;
+
+const defaultRouteClient: RouteClient = {
+  createDynamicRoute,
+  deleteDynamicRoute
 };
 
 export type AdminActionState = {
@@ -18,38 +49,50 @@ export type AdminActionState = {
   message: string;
 };
 
-type AdminGuardResult =
-  | {
-      ok: true;
-      supabase: Awaited<ReturnType<typeof createServerClient>>;
-    }
-  | {
-      ok: false;
-      message: string;
-    };
+class AuthorizationError extends Error {
+  constructor(message = "No tienes permisos para ejecutar esta accion.") {
+    super(message);
+    this.name = "AuthorizationError";
+  }
+}
 
 function normalizeFormValue(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function normalizeRequiredText(value: string, fieldName: string): string {
+  const normalized = value.trim();
+
+  if (!normalized) {
+    throw new Error(`${fieldName} es obligatorio.`);
+  }
+
+  return normalized;
 }
 
-function parseExpirationDateTime(rawValue: string): {
-  isoValue: string | null;
-  errorMessage: string | null;
-} {
-  if (!rawValue) {
-    return { isoValue: null, errorMessage: null };
+function normalizeRuleId(ruleId: string): number {
+  const normalized = normalizeRequiredText(ruleId, "rule_id");
+  const parsed = Number.parseInt(normalized, 10);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("rule_id es invalido.");
   }
 
-  const parsedDate = new Date(rawValue);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return { isoValue: null, errorMessage: "La fecha de expiracion es invalida." };
+  return parsed;
+}
+
+function normalizePrefix(prefix: string): string {
+  const normalized = normalizeRequiredText(prefix, "recipient_prefix");
+
+  if (normalized.length > MAX_PREFIX_LENGTH) {
+    throw new Error("recipient_prefix supera el maximo permitido.");
   }
 
-  return { isoValue: parsedDate.toISOString(), errorMessage: null };
+  return normalized;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function getServiceRoleClient() {
@@ -68,7 +111,7 @@ function getServiceRoleClient() {
   });
 }
 
-async function requireAdminSession(): Promise<AdminGuardResult> {
+async function requireAdminSupabaseClient(): Promise<AdminSupabaseClient> {
   const supabase = await createServerClient();
 
   const {
@@ -77,10 +120,7 @@ async function requireAdminSession(): Promise<AdminGuardResult> {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return {
-      ok: false,
-      message: "Sesion invalida. Inicia sesion nuevamente."
-    };
+    throw new AuthorizationError("Sesion invalida. Inicia sesion nuevamente.");
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -90,32 +130,135 @@ async function requireAdminSession(): Promise<AdminGuardResult> {
     .maybeSingle<ProfileRow>();
 
   if (profileError) {
-    return {
-      ok: false,
-      message: "No se pudo validar el rol del administrador."
-    };
+    throw new Error("No se pudo validar el rol del administrador.");
   }
 
   if (!profile || profile.role !== ADMIN_ROLE) {
-    return {
-      ok: false,
-      message: "No tienes permisos para ejecutar esta accion."
-    };
+    throw new AuthorizationError();
   }
 
-  return {
-    ok: true,
-    supabase
-  };
+  return supabase;
+}
+
+function extractMailgunRouteId(response: MailgunRouteResponse): string {
+  const routeId = response.route?.id?.trim();
+
+  if (!routeId) {
+    throw new Error("Mailgun no devolvio un routeId valido.");
+  }
+
+  return routeId;
+}
+
+async function grantAccessWithClient(
+  supabase: AdminSupabaseClient,
+  userId: string,
+  prefix: string,
+  routeClient: RouteClient
+): Promise<AccessRuleRow> {
+  const normalizedUserId = normalizeRequiredText(userId, "user_id");
+  const normalizedPrefix = normalizePrefix(prefix);
+
+  const createdRoute = await routeClient.createDynamicRoute(normalizedPrefix);
+  const routeId = extractMailgunRouteId(createdRoute);
+
+  try {
+    const { data, error } = await supabase
+      .from("access_rules")
+      .insert({
+        user_id: normalizedUserId,
+        recipient_prefix: normalizedPrefix,
+        mailgun_route_id: routeId,
+        is_active: true
+      })
+      .select("id, user_id, recipient_prefix, mailgun_route_id, is_active")
+      .single<AccessRuleRow>();
+
+    if (error || !data) {
+      throw new Error(error?.message ?? "No se pudo crear la regla de acceso.");
+    }
+
+    return data;
+  } catch (insertError: unknown) {
+    try {
+      await routeClient.deleteDynamicRoute(routeId);
+    } catch (rollbackError: unknown) {
+      const rollbackReason =
+        rollbackError instanceof Error ? rollbackError.message : "Error desconocido";
+      console.error(`Rollback Mailgun fallido para routeId ${routeId}: ${rollbackReason}`);
+    }
+
+    throw insertError;
+  }
+}
+
+async function revokeAccessWithClient(
+  supabase: AdminSupabaseClient,
+  ruleId: string,
+  routeClient: RouteClient
+): Promise<AccessRuleLookupRow> {
+  const normalizedRuleId = normalizeRuleId(ruleId);
+
+  const { data: currentRule, error: fetchError } = await supabase
+    .from("access_rules")
+    .select("id, mailgun_route_id")
+    .eq("id", normalizedRuleId)
+    .maybeSingle<AccessRuleLookupRow>();
+
+  if (fetchError) {
+    throw new Error(`No se pudo leer la regla: ${fetchError.message}`);
+  }
+
+  if (!currentRule) {
+    throw new Error("La regla indicada no existe o ya no esta disponible.");
+  }
+
+  if (currentRule.mailgun_route_id) {
+    await routeClient.deleteDynamicRoute(currentRule.mailgun_route_id);
+  }
+
+  const { data: updatedRule, error: updateError } = await supabase
+    .from("access_rules")
+    .update({ is_active: false, mailgun_route_id: null })
+    .eq("id", normalizedRuleId)
+    .select("id, mailgun_route_id")
+    .single<AccessRuleLookupRow>();
+
+  if (updateError || !updatedRule) {
+    throw new Error(updateError?.message ?? "No se pudo revocar la regla de acceso.");
+  }
+
+  return updatedRule;
+}
+
+export async function grantAccess(userId: string, prefix: string): Promise<AccessRuleRow> {
+  const supabase = await requireAdminSupabaseClient();
+  const createdRule = await grantAccessWithClient(supabase, userId, prefix, defaultRouteClient);
+  revalidatePath(ADMIN_DASHBOARD_PATH);
+  return createdRule;
+}
+
+export async function revokeAccess(ruleId: string): Promise<AccessRuleLookupRow> {
+  const supabase = await requireAdminSupabaseClient();
+  const revokedRule = await revokeAccessWithClient(supabase, ruleId, defaultRouteClient);
+  revalidatePath(ADMIN_DASHBOARD_PATH);
+  return revokedRule;
 }
 
 export async function adminCreateUser(
   _prevState: AdminActionState,
   formData: FormData
 ): Promise<AdminActionState> {
-  const adminSession = await requireAdminSession();
-  if (!adminSession.ok) {
-    return { status: "error", message: adminSession.message };
+  try {
+    await requireAdminSupabaseClient();
+  } catch (error: unknown) {
+    if (error instanceof AuthorizationError) {
+      return { status: "error", message: error.message };
+    }
+    return {
+      status: "error",
+      message: "No se pudo validar la sesion del administrador."
+    };
   }
 
   const email = normalizeFormValue(formData.get("email")).toLowerCase();
@@ -175,64 +318,24 @@ export async function createAccessRule(
   _prevState: AdminActionState,
   formData: FormData
 ): Promise<AdminActionState> {
-  const adminSession = await requireAdminSession();
-  if (!adminSession.ok) {
-    return { status: "error", message: adminSession.message };
-  }
-
   const userId = normalizeFormValue(formData.get("user_id"));
   const recipientPrefix = normalizeFormValue(formData.get("recipient_prefix"));
-  const expirationInput = normalizeFormValue(formData.get("expires_at"));
-
-  if (!userId || !recipientPrefix) {
-    return {
-      status: "error",
-      message: "Debes completar user_id y recipient_prefix."
-    };
-  }
-
-  if (recipientPrefix.length > 120) {
-    return {
-      status: "error",
-      message: "recipient_prefix supera el maximo permitido."
-    };
-  }
-
-  const parsedExpiration = parseExpirationDateTime(expirationInput);
-  if (parsedExpiration.errorMessage) {
-    return {
-      status: "error",
-      message: parsedExpiration.errorMessage
-    };
-  }
-
-  let shouldRevalidate = false;
 
   try {
-    const { error } = await adminSession.supabase.from("access_rules").insert({
-      user_id: userId,
-      recipient_prefix: recipientPrefix,
-      expires_at: parsedExpiration.isoValue,
-      is_active: true
-    });
-
-    if (error) {
-      return {
-        status: "error",
-        message: `No se pudo crear la regla: ${error.message}`
-      };
+    await grantAccess(userId, recipientPrefix);
+  } catch (error: unknown) {
+    if (error instanceof AuthorizationError) {
+      return { status: "error", message: error.message };
     }
 
-    shouldRevalidate = true;
-  } catch {
+    if (error instanceof Error) {
+      return { status: "error", message: `No se pudo crear la regla: ${error.message}` };
+    }
+
     return {
       status: "error",
       message: "Error inesperado al crear la regla de acceso."
     };
-  }
-
-  if (shouldRevalidate) {
-    revalidatePath(ADMIN_DASHBOARD_PATH);
   }
 
   return {
@@ -245,55 +348,23 @@ export async function revokeAccessRule(
   _prevState: AdminActionState,
   formData: FormData
 ): Promise<AdminActionState> {
-  const adminSession = await requireAdminSession();
-  if (!adminSession.ok) {
-    return { status: "error", message: adminSession.message };
-  }
-
-  const ruleIdRaw = normalizeFormValue(formData.get("rule_id"));
-  const ruleId = Number.parseInt(ruleIdRaw, 10);
-
-  if (!Number.isInteger(ruleId) || ruleId <= 0) {
-    return {
-      status: "error",
-      message: "rule_id es invalido."
-    };
-  }
-
-  let shouldRevalidate = false;
+  const ruleId = normalizeFormValue(formData.get("rule_id"));
 
   try {
-    const { data, error } = await adminSession.supabase
-      .from("access_rules")
-      .update({ is_active: false })
-      .eq("id", ruleId)
-      .select("id")
-      .maybeSingle<{ id: number }>();
-
-    if (error) {
-      return {
-        status: "error",
-        message: `No se pudo revocar la regla: ${error.message}`
-      };
+    await revokeAccess(ruleId);
+  } catch (error: unknown) {
+    if (error instanceof AuthorizationError) {
+      return { status: "error", message: error.message };
     }
 
-    if (!data) {
-      return {
-        status: "error",
-        message: "La regla indicada no existe o ya no esta disponible."
-      };
+    if (error instanceof Error) {
+      return { status: "error", message: `No se pudo revocar la regla: ${error.message}` };
     }
 
-    shouldRevalidate = true;
-  } catch {
     return {
       status: "error",
       message: "Error inesperado al revocar la regla de acceso."
     };
-  }
-
-  if (shouldRevalidate) {
-    revalidatePath(ADMIN_DASHBOARD_PATH);
   }
 
   return {
