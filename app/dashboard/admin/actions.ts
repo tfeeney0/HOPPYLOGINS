@@ -159,8 +159,27 @@ async function grantAccessWithClient(
   const normalizedUserId = normalizeRequiredText(userId, "user_id");
   const normalizedPrefix = normalizePrefix(prefix);
 
-  const createdRoute = await routeClient.createDynamicRoute(normalizedPrefix);
-  const routeId = extractMailgunRouteId(createdRoute);
+  const { data: existingRoute, error: existingRouteError } = await supabase
+    .from("access_rules")
+    .select("mailgun_route_id")
+    .eq("recipient_prefix", normalizedPrefix)
+    .not("mailgun_route_id", "is", null)
+    .limit(1)
+    .maybeSingle<{ mailgun_route_id: string | null }>();
+
+  if (existingRouteError) {
+    throw new Error(`No se pudo validar la ruta existente: ${existingRouteError.message}`);
+  }
+
+  const existingRouteId = existingRoute?.mailgun_route_id?.trim() ?? "";
+  let routeId = existingRouteId;
+  let wasRouteCreated = false;
+
+  if (!routeId) {
+    const createdRoute = await routeClient.createDynamicRoute(normalizedPrefix);
+    routeId = extractMailgunRouteId(createdRoute);
+    wasRouteCreated = true;
+  }
 
   try {
     const { data, error } = await supabase
@@ -180,12 +199,14 @@ async function grantAccessWithClient(
 
     return data;
   } catch (insertError: unknown) {
-    try {
-      await routeClient.deleteDynamicRoute(routeId);
-    } catch (rollbackError: unknown) {
-      const rollbackReason =
-        rollbackError instanceof Error ? rollbackError.message : "Error desconocido";
-      console.error(`Rollback Mailgun fallido para routeId ${routeId}: ${rollbackReason}`);
+    if (wasRouteCreated) {
+      try {
+        await routeClient.deleteDynamicRoute(routeId);
+      } catch (rollbackError: unknown) {
+        const rollbackReason =
+          rollbackError instanceof Error ? rollbackError.message : "Error desconocido";
+        console.error(`Rollback Mailgun fallido para routeId ${routeId}: ${rollbackReason}`);
+      }
     }
 
     throw insertError;
@@ -213,13 +234,9 @@ async function revokeAccessWithClient(
     throw new Error("La regla indicada no existe o ya no esta disponible.");
   }
 
-  if (currentRule.mailgun_route_id) {
-    await routeClient.deleteDynamicRoute(currentRule.mailgun_route_id);
-  }
-
   const { data: updatedRule, error: updateError } = await supabase
     .from("access_rules")
-    .update({ is_active: false, mailgun_route_id: null })
+    .update({ is_active: false })
     .eq("id", normalizedRuleId)
     .select("id, mailgun_route_id")
     .single<AccessRuleLookupRow>();
