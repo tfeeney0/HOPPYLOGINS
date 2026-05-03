@@ -18,6 +18,7 @@ type AccessRuleRow = {
   id: number;
   user_id: string;
   recipient_prefix: string;
+  expires_at: string | null;
   is_active: boolean;
 };
 
@@ -74,6 +75,24 @@ function normalizePrefix(prefix: string): string {
   return normalized;
 }
 
+function normalizeOptionalDate(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const parsedDate = new Date(normalizedValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new Error("La fecha de expiración es inválida");
+  }
+
+  return parsedDate.toISOString();
+}
+
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -126,7 +145,8 @@ async function requireAdminSupabaseClient(): Promise<AdminSupabaseClient> {
 async function grantAccessWithClient(
   supabase: AdminSupabaseClient,
   userId: string,
-  prefix: string
+  prefix: string,
+  expiresAt: string | null
 ): Promise<AccessRuleRow> {
   const normalizedUserId = normalizeRequiredText(userId, "user_id");
   const normalizedPrefix = normalizePrefix(prefix);
@@ -136,9 +156,10 @@ async function grantAccessWithClient(
     .insert({
       user_id: normalizedUserId,
       recipient_prefix: normalizedPrefix,
+      expires_at: expiresAt,
       is_active: true
     })
-    .select("id, user_id, recipient_prefix, is_active")
+    .select("id, user_id, recipient_prefix, expires_at, is_active")
     .single<AccessRuleRow>();
 
   if (error || !data) {
@@ -182,9 +203,13 @@ async function revokeAccessWithClient(
   return updatedRule;
 }
 
-export async function grantAccess(userId: string, prefix: string): Promise<AccessRuleRow> {
+export async function grantAccess(
+  userId: string,
+  prefix: string,
+  expiresAt: string | null
+): Promise<AccessRuleRow> {
   const supabase = await requireAdminSupabaseClient();
-  const createdRule = await grantAccessWithClient(supabase, userId, prefix);
+  const createdRule = await grantAccessWithClient(supabase, userId, prefix, expiresAt);
   revalidatePath(ADMIN_DASHBOARD_PATH);
   return createdRule;
 }
@@ -293,7 +318,8 @@ export async function createAccessRule(
   const recipientPrefix = normalizeFormValue(formData.get("recipient_prefix"));
 
   try {
-    await grantAccess(userId, recipientPrefix);
+    const expiresAt = normalizeOptionalDate(formData.get("expires_at"));
+    await grantAccess(userId, recipientPrefix, expiresAt);
   } catch (error: unknown) {
     if (error instanceof AuthorizationError) {
       return { status: "error", message: error.message };

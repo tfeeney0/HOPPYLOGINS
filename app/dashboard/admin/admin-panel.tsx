@@ -163,6 +163,9 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
             disabled={!hasUsers}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100"
           />
+          <p className="mt-1 text-xs text-slate-500">
+            Si lo dejas en blanco, el acceso no expira hasta que se revoque.
+          </p>
         </div>
       </div>
 
