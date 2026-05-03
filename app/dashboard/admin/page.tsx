@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient, type User } from "@supabase/supabase-js";
+import {
+  AdminPanel,
+  type AccessRuleRecord,
+  type AccessRuleTab,
+  type AccessRuleTableRow,
+  type AdminPanelUser
+} from "./admin-panel";
 import { createServerClient } from "@/utils/supabase/server";
-import { AdminPanel, type AccessRuleRecord, type AdminPanelUser } from "./admin-panel";
 
 const ADMIN_ROLE = "admin";
 const LOGIN_PATH = "/login";
@@ -29,6 +35,21 @@ type AuthUserRecord = {
   id: string;
   email: string | null;
 };
+
+type AdminPageSearchParams = {
+  tab?: string | string[];
+};
+
+type PageProps = {
+  searchParams: Promise<AdminPageSearchParams>;
+};
+
+function resolveAccessRuleTab(searchParams?: AdminPageSearchParams): AccessRuleTab {
+  const rawTab = searchParams?.tab;
+  const value = Array.isArray(rawTab) ? rawTab[0] : rawTab;
+
+  return value === "inactive" ? "inactive" : "active";
+}
 
 function getServiceRoleClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -185,14 +206,32 @@ async function getAdminPageData(): Promise<AdminPageData> {
   const fetchError =
     errors.length > 0 ? "No se pudo cargar toda la informacion de administracion." : null;
 
-  return {
-    users: buildUsersWithRules(authUsers, profiles ?? [], rules ?? []),
-    fetchError
-  };
+  const users = buildUsersWithRules(authUsers, profiles ?? [], rules ?? []);
+
+  return { users, fetchError };
 }
 
-export default async function AdminDashboardPage() {
+function buildFilteredRuleRows(users: AdminPanelUser[], activeTab: AccessRuleTab): AccessRuleTableRow[] {
+  const targetIsActive = activeTab === "active";
+
+  return users
+    .flatMap((user) =>
+      user.rules
+        .filter((rule) => rule.is_active === targetIsActive)
+        .map((rule) => ({
+          ...rule,
+          user_email: user.email,
+          user_role: user.role
+        }))
+    )
+    .sort((left, right) => right.id - left.id);
+}
+
+export default async function AdminDashboardPage(props: PageProps) {
+  const searchParams = await props.searchParams;
+  const activeTab = resolveAccessRuleTab(searchParams);
   const { users, fetchError } = await getAdminPageData();
+  const filteredRules = buildFilteredRuleRows(users, activeTab);
 
   return (
     <main className="min-h-svh bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
@@ -204,7 +243,12 @@ export default async function AdminDashboardPage() {
           </p>
         </header>
 
-        <AdminPanel users={users} fetchError={fetchError} />
+        <AdminPanel
+          users={users}
+          filteredRules={filteredRules}
+          activeTab={activeTab}
+          fetchError={fetchError}
+        />
       </section>
     </main>
   );

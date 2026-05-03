@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminCreateUser, createAccessRule, revokeAccessRule } from "./actions";
@@ -20,8 +21,17 @@ export type AdminPanelUser = {
   rules: AccessRuleRecord[];
 };
 
+export type AccessRuleTab = "active" | "inactive";
+
+export type AccessRuleTableRow = AccessRuleRecord & {
+  user_email: string | null;
+  user_role: string;
+};
+
 type AdminPanelProps = {
   users: AdminPanelUser[];
+  filteredRules: AccessRuleTableRow[];
+  activeTab: AccessRuleTab;
   fetchError: string | null;
 };
 
@@ -247,30 +257,7 @@ function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolea
   );
 }
 
-type RuleRow = AccessRuleRecord & {
-  user_email: string | null;
-  user_role: string;
-};
-
-function toRuleRows(users: AdminPanelUser[]): RuleRow[] {
-  return users
-    .flatMap((user) =>
-      user.rules.map((rule) => ({
-        ...rule,
-        user_email: user.email,
-        user_role: user.role
-      }))
-    )
-    .sort((left, right) => {
-      if (left.is_active !== right.is_active) {
-        return Number(right.is_active) - Number(left.is_active);
-      }
-      return right.id - left.id;
-    });
-}
-
-export function AdminPanel({ users, fetchError }: AdminPanelProps) {
-  const rules = toRuleRows(users);
+export function AdminPanel({ users, filteredRules, activeTab, fetchError }: AdminPanelProps) {
 
   return (
     <section className="space-y-6">
@@ -339,8 +326,32 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-slate-900">Reglas de Acceso</h2>
+        <div className="mt-4 border-b border-slate-200">
+          <nav className="-mb-px flex items-center gap-1" aria-label="Tabs de reglas de acceso">
+            <Link
+              href="?tab=active"
+              className={
+                activeTab === "active"
+                  ? "inline-flex items-center border-b-2 border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700"
+                  : "inline-flex items-center border-b-2 border-transparent px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
+              }
+            >
+              Activas
+            </Link>
+            <Link
+              href="?tab=inactive"
+              className={
+                activeTab === "inactive"
+                  ? "inline-flex items-center border-b-2 border-blue-600 px-4 py-2 text-sm font-semibold text-blue-700"
+                  : "inline-flex items-center border-b-2 border-transparent px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
+              }
+            >
+              Inactivas
+            </Link>
+          </nav>
+        </div>
 
-        {rules.length === 0 ? (
+        {filteredRules.length === 0 ? (
           <p className="mt-3 text-sm text-slate-600">No hay reglas de acceso registradas.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
@@ -357,7 +368,7 @@ export function AdminPanel({ users, fetchError }: AdminPanelProps) {
                 </tr>
               </thead>
               <tbody>
-                {rules.map((rule) => (
+                {filteredRules.map((rule) => (
                   <tr key={rule.id} className="border-b border-slate-100 text-sm text-slate-700">
                     <td className="px-3 py-3 font-mono">{rule.id}</td>
                     <td className="px-3 py-3">
