@@ -2,38 +2,37 @@ import type { Metadata } from "next";
 import { LegalShell } from "@/app/(marketing)/components/legal-shell";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad"
+  title: "Privacy Policy"
 };
 
 export default function PrivacidadPage() {
   return (
     <LegalShell
-      title="Política de Privacidad"
-      subtitle="Esta política describe cómo tratamos la información procesada en nuestra plataforma B2B."
+      title="Privacy Policy"
+      subtitle="This policy explains how we process information within our B2B platform."
     >
-      <h2>Datos Procesados</h2>
+      <h2>Processed Data</h2>
       <p>
-        Procesamos la información mínima necesaria para que los equipos autorizados
-        puedan visualizar correos de verificación y operar de forma segura.
+        We process only the minimum data required for authorized teams to view
+        verification emails and operate securely.
       </p>
 
-      <h2>Retención de Datos</h2>
+      <h2>Data Retention</h2>
       <p>
-        Los correos transaccionales procesados por nuestra infraestructura se almacenan
-        de forma segura temporalmente para la lectura del equipo autorizado y pueden
-        ser purgados por el administrador.
+        Transactional emails processed by our infrastructure are stored securely
+        for temporary access by authorized teams and may be purged by administrators.
       </p>
 
-      <h2>Seguridad</h2>
+      <h2>Security</h2>
       <p>
-        Utilizamos autenticación de base de datos a nivel de fila (RLS) para
-        garantizar que los datos estén aislados por inquilino (tenant).
+        We use row-level security (RLS) at the database layer to ensure tenant-level
+        data isolation.
       </p>
 
-      <h2>Contacto</h2>
+      <h2>Contact</h2>
       <p>
-        Para dudas sobre privacidad y cumplimiento, el administrador de la cuenta
-        puede contactar al equipo de soporte por los canales oficiales de HoppyLogins.
+        For privacy and compliance inquiries, account administrators can contact
+        the support team through HoppyLogins&apos; official channels.
       </p>
     </LegalShell>
   );

@@ -2,41 +2,38 @@ import type { Metadata } from "next";
 import { LegalShell } from "@/app/(marketing)/components/legal-shell";
 
 export const metadata: Metadata = {
-  title: "Términos y Condiciones"
+  title: "Terms and Conditions"
 };
 
 export default function TerminosPage() {
   return (
     <LegalShell
-      title="Términos y Condiciones"
-      subtitle="Estas condiciones regulan el uso de HoppyLogins como servicio de gestión de accesos para organizaciones."
+      title="Terms and Conditions"
+      subtitle="These terms govern the use of HoppyLogins as an access management service for organizations."
     >
-      <h2>Alcance del Servicio</h2>
+      <h2>Service Scope</h2>
       <p>
-        HoppyLogins ofrece una infraestructura B2B para centralizar correos
-        transaccionales y delegar accesos operativos de forma controlada dentro de
-        equipos de trabajo.
+        HoppyLogins provides B2B infrastructure to centralize transactional emails
+        and delegate operational access in a controlled way across work teams.
       </p>
 
-      <h2>Uso Aceptable</h2>
+      <h2>Acceptable Use</h2>
       <p>
-        HoppyLogins es una herramienta B2B para la gestión de equipos. Queda
-        estrictamente prohibido el uso de este servicio para la creación automatizada
-        de cuentas, spam, o cualquier actividad que viole los términos de servicio de
-        plataformas de terceros (como Meta/Instagram).
+        HoppyLogins is a B2B team management tool. Using this service for automated
+        account creation, spam, or any activity that violates third-party platform
+        terms of service (such as Meta/Instagram) is strictly prohibited.
       </p>
 
-      <h2>Terminación de Servicio</h2>
+      <h2>Service Termination</h2>
       <p>
-        Nos reservamos el derecho de suspender inmediatamente cualquier cuenta que
-        utilice nuestros webhooks para recibir spam o tráfico no solicitado.
+        We reserve the right to immediately suspend any account that uses our
+        webhooks to receive spam or unsolicited traffic.
       </p>
 
-      <h2>Actualizaciones</h2>
+      <h2>Updates</h2>
       <p>
-        Podemos actualizar estos términos para reflejar cambios regulatorios,
-        funcionales o de seguridad. El uso continuado del servicio implica la
-        aceptación de la versión vigente.
+        We may update these terms to reflect regulatory, functional, or security
+        changes. Continued use of the service constitutes acceptance of the current version.
       </p>
     </LegalShell>
   );

@@ -80,7 +80,7 @@ async function listAllAuthUsers(): Promise<AuthUserRecord[]> {
     });
 
     if (error) {
-      throw new Error(`No se pudieron cargar usuarios de auth: ${error.message}`);
+      throw new Error(`Could not load auth users: ${error.message}`);
     }
 
     const users: User[] = data.users ?? [];
@@ -148,7 +148,7 @@ function buildUsersWithRules(
   return users.sort((left, right) => {
     const leftLabel = left.email ?? left.id;
     const rightLabel = right.email ?? right.id;
-    return leftLabel.localeCompare(rightLabel, "es");
+    return leftLabel.localeCompare(rightLabel, "en");
   });
 }
 
@@ -171,7 +171,7 @@ async function getAdminPageData(): Promise<AdminPageData> {
     .maybeSingle<ProfileRow>();
 
   if (profileError) {
-    throw new Error("No se pudo validar el rol del usuario administrador.");
+    throw new Error("Could not validate the admin user role.");
   }
 
   if (!currentProfile || currentProfile.role !== ADMIN_ROLE) {
@@ -185,7 +185,7 @@ async function getAdminPageData(): Promise<AdminPageData> {
     authUsers = await listAllAuthUsers();
   } catch (error) {
     const fallbackMessage =
-      error instanceof Error ? error.message : "No se pudieron cargar usuarios de auth.";
+      error instanceof Error ? error.message : "Could not load auth users.";
     authUsersError = fallbackMessage;
   }
 
@@ -204,7 +204,7 @@ async function getAdminPageData(): Promise<AdminPageData> {
   );
 
   const fetchError =
-    errors.length > 0 ? "No se pudo cargar toda la informacion de administracion." : null;
+    errors.length > 0 ? "Could not load all administration data." : null;
 
   const users = buildUsersWithRules(authUsers, profiles ?? [], rules ?? []);
 
@@ -253,9 +253,9 @@ export default async function AdminDashboardPage(props: PageProps) {
     <main className="min-h-svh bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
       <section className="mx-auto w-full max-w-6xl space-y-6">
         <header>
-          <h1 className="text-2xl font-semibold text-slate-900">Panel de Administracion</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Gestion de usuarios y reglas de acceso de correo.
+            User management and email access rules.
           </p>
         </header>
 

@@ -30,7 +30,7 @@ export function LoginSubmitButton() {
             />
           </svg>
         )}
-        <span>{pending ? "Iniciando sesion..." : "Entrar"}</span>
+        <span>{pending ? "Signing in..." : "Sign in"}</span>
       </span>
     </button>
   );

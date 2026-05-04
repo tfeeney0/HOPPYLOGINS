@@ -1,7 +1,7 @@
 {
   "name": "Hoppylogins",
   "short_name": "Hoppy",
-  "description": "Buzón de correos seguro con acceso granular",
+  "description": "Secure email inbox with granular access control",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

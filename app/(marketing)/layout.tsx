@@ -18,7 +18,7 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
             href="/login"
             className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-100"
           >
-            Acceder
+            Sign in
           </Link>
         </div>
       </header>

@@ -3,7 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const appName = "Hoppylogins";
-const appDescription = "Buzón de correos seguro con acceso granular";
+const appDescription = "Secure email inbox with granular access control";
 
 export const metadata: Metadata = {
   applicationName: appName,
@@ -54,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body>
         {children}
         <Analytics />

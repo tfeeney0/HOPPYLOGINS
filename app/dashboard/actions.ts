@@ -16,10 +16,10 @@ export async function signOut(): Promise<void> {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      redirectPath = `${LOGIN_PATH}?error=${encodeURIComponent("No se pudo cerrar sesion")}`;
+      redirectPath = `${LOGIN_PATH}?error=${encodeURIComponent("Could not sign out")}`;
     }
   } catch {
-    redirectPath = `${LOGIN_PATH}?error=${encodeURIComponent("No se pudo cerrar sesion")}`;
+    redirectPath = `${LOGIN_PATH}?error=${encodeURIComponent("Could not sign out")}`;
   }
 
   revalidatePath(DASHBOARD_PATH);

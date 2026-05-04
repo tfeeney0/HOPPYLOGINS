@@ -4,13 +4,13 @@ import { Hero } from "@/app/(marketing)/components/hero";
 import { Pricing } from "@/app/(marketing)/components/pricing";
 
 export const metadata: Metadata = {
-  title: "Gestión Segura de Accesos B2B",
+  title: "Secure B2B Access Management",
   description:
-    "Plataforma para agencias de social media que centraliza credenciales y accesos temporales con seguridad enterprise.",
+    "Platform for social media agencies that centralizes credentials and temporary access with enterprise-grade security.",
   openGraph: {
-    title: "Gestión Segura de Accesos B2B",
+    title: "Secure B2B Access Management",
     description:
-      "Plataforma para agencias de social media que centraliza credenciales y accesos temporales con seguridad enterprise.",
+      "Platform for social media agencies that centralizes credentials and temporary access with enterprise-grade security.",
     url: "https://hoppylogins.com",
     siteName: "HoppyLogins",
     type: "website"

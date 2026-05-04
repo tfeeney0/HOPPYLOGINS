@@ -25,7 +25,7 @@ async function login(formData: FormData): Promise<void> {
   const password = normalizeTextField(formData.get("password"));
 
   if (!email || !password) {
-    redirect("/login?error=Completa%20email%20y%20contrasena");
+    redirect("/login?error=Please%20enter%20your%20email%20and%20password");
   }
 
   const supabase = await createServerClient();
@@ -35,7 +35,7 @@ async function login(formData: FormData): Promise<void> {
   });
 
   if (error) {
-    redirect("/login?error=Credenciales%20invalidas");
+    redirect("/login?error=Invalid%20credentials");
   }
 
   redirect("/dashboard");
@@ -54,15 +54,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800"
           >
             <span aria-hidden="true">←</span>
-            <span>Volver al inicio</span>
+            <span>Back to home</span>
           </Link>
         </div>
 
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Iniciar sesion</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Ingresa tus credenciales para acceder al dashboard.
+            Enter your credentials to access the dashboard.
           </p>
         </header>
 
@@ -87,7 +87,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               autoComplete="email"
               required
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:border-slate-500"
-              placeholder="tu@email.com"
+              placeholder="you@company.com"
             />
           </div>
 
@@ -96,7 +96,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               htmlFor="password"
               className="mb-1 block text-sm font-medium text-slate-700"
             >
-              Contrasena
+              Password
             </label>
             <input
               id="password"

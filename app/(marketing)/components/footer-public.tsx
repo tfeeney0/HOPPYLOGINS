@@ -7,13 +7,13 @@ export function FooterPublic() {
         <p className="text-sm text-slate-500">© 2026 HoppyLogins Inc.</p>
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/terminos" className="text-slate-600 transition-colors hover:text-slate-900">
-            Términos
+            Terms
           </Link>
           <Link
             href="/privacidad"
             className="text-slate-600 transition-colors hover:text-slate-900"
           >
-            Privacidad
+            Privacy
           </Link>
         </nav>
       </div>

@@ -84,7 +84,7 @@ function RefreshButton({
         "inline-flex items-center justify-center rounded-md border border-slate-300 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70",
         compact ? "h-10 w-10" : "h-9 gap-2 px-3"
       ].join(" ")}
-      aria-label="Refrescar"
+      aria-label="Refresh"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +97,7 @@ function RefreshButton({
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M20 12a8 8 0 10-2.34 5.66M20 4v8h-8" />
       </svg>
-      {!compact && <span>{loading ? "Cargando..." : "Refrescar"}</span>}
+      {!compact && <span>{loading ? "Loading..." : "Refresh"}</span>}
     </button>
   );
 }
@@ -126,7 +126,7 @@ function SignOutButton({ className }: { className: string }) {
             />
           </svg>
         )}
-        <span>{pending ? "Cerrando..." : "Cerrar Sesion"}</span>
+        <span>{pending ? "Signing out..." : "Sign out"}</span>
       </span>
     </button>
   );
@@ -138,7 +138,7 @@ export function Navbar({ email, role }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isRefreshing, startRefreshTransition] = useTransition();
   const roleBadge = getRoleBadge(role);
-  const userEmail = email ?? "Usuario sin email";
+  const userEmail = email ?? "User without email";
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Inbox" },
@@ -210,7 +210,7 @@ export function Navbar({ email, role }: NavbarProps) {
             className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
             aria-expanded={mobileMenuOpen}
             aria-controls="dashboard-mobile-menu"
-            aria-label={mobileMenuOpen ? "Cerrar menu" : "Abrir menu"}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -235,7 +235,7 @@ export function Navbar({ email, role }: NavbarProps) {
       >
         <button
           type="button"
-          aria-label="Cerrar menu"
+          aria-label="Close menu"
           className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -255,7 +255,7 @@ export function Navbar({ email, role }: NavbarProps) {
               type="button"
               onClick={() => setMobileMenuOpen(false)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
-              aria-label="Cerrar menu"
+              aria-label="Close menu"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

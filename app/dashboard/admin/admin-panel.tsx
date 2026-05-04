@@ -60,15 +60,15 @@ function isExpiredDate(expiresAt: string | null, nowTimestamp: number): boolean 
 
 function formatExpirationLabel(value: string | null): string {
   if (!value) {
-    return "Sin expiracion";
+    return "No expiration";
   }
 
   const parsedDate = new Date(value);
   if (Number.isNaN(parsedDate.getTime())) {
-    return "Fecha invalida";
+    return "Invalid date";
   }
 
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(parsedDate);
@@ -135,7 +135,7 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="user_id" className="mb-1 block text-sm font-medium text-slate-700">
-            Usuario
+            User
           </label>
           <select
             id="user_id"
@@ -146,7 +146,7 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100"
           >
             <option value="" disabled>
-              Selecciona un usuario
+              Select a user
             </option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
@@ -177,7 +177,7 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
 
         <div>
           <label htmlFor="expires_at" className="mb-1 block text-sm font-medium text-slate-700">
-            Expira En
+            Expires at
           </label>
           <input
             id="expires_at"
@@ -188,19 +188,19 @@ function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 disabled:cursor-not-allowed disabled:bg-slate-100"
           />
           <p className="mt-1 text-xs text-slate-500">
-            Si lo dejas en blanco, el acceso no expira hasta que se revoque.
+            If left blank, access remains active until revoked.
           </p>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton
-          label="Asignar Acceso"
-          pendingLabel="Guardando..."
+          label="Grant Access"
+          pendingLabel="Saving..."
           disabled={!hasUsers}
           className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
         />
-        {!hasUsers && <p className="text-sm text-slate-500">No hay usuarios disponibles.</p>}
+        {!hasUsers && <p className="text-sm text-slate-500">No users available.</p>}
       </div>
 
       <FeedbackMessage state={state} />
@@ -224,7 +224,7 @@ function CreateUserForm() {
             type="email"
             required
             autoComplete="email"
-            placeholder="usuario@empresa.com"
+            placeholder="user@company.com"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500"
           />
         </div>
@@ -234,7 +234,7 @@ function CreateUserForm() {
             htmlFor="new_user_password"
             className="mb-1 block text-sm font-medium text-slate-700"
           >
-            Contrasena
+            Password
           </label>
           <input
             id="new_user_password"
@@ -243,7 +243,7 @@ function CreateUserForm() {
             required
             autoComplete="new-password"
             minLength={8}
-            placeholder="Minimo 8 caracteres"
+            placeholder="Minimum 8 characters"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-500"
           />
         </div>
@@ -251,8 +251,8 @@ function CreateUserForm() {
 
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton
-          label="Crear Usuario"
-          pendingLabel="Creando..."
+          label="Create User"
+          pendingLabel="Creating..."
           className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
         />
       </div>
@@ -266,15 +266,15 @@ function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolea
   const [state, formAction] = useActionState(revokeAccessRule, INITIAL_ACTION_STATE);
 
   if (!isActive) {
-    return <span className="text-xs text-slate-400">Sin acciones</span>;
+    return <span className="text-xs text-slate-400">No actions</span>;
   }
 
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="rule_id" value={ruleId} />
       <SubmitButton
-        label="Revocar"
-        pendingLabel="Revocando..."
+        label="Revoke"
+        pendingLabel="Revoking..."
         className="inline-flex items-center rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
       />
       {state.status === "error" && state.message && (
@@ -296,26 +296,26 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
       )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Crear Nuevo Usuario</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Create New User</h2>
         <div className="mt-4">
           <CreateUserForm />
         </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Usuarios</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Users</h2>
 
         {users.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">No hay usuarios registrados en profiles.</p>
+          <p className="mt-3 text-sm text-slate-600">No users registered in profiles.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-3 py-2 font-medium">Usuario (Email)</th>
-                  <th className="px-3 py-2 font-medium">Rol</th>
-                  <th className="px-3 py-2 font-medium">Reglas Activas</th>
-                  <th className="px-3 py-2 font-medium">Reglas Inactivas</th>
+                  <th className="px-3 py-2 font-medium">User (Email)</th>
+                  <th className="px-3 py-2 font-medium">Role</th>
+                  <th className="px-3 py-2 font-medium">Active Rules</th>
+                  <th className="px-3 py-2 font-medium">Inactive Rules</th>
                   <th className="px-3 py-2 font-medium">Total</th>
                 </tr>
               </thead>
@@ -346,16 +346,16 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Asignar Nuevo Acceso</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Grant New Access</h2>
         <div className="mt-4">
           <CreateAccessRuleForm users={users} />
         </div>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Reglas de Acceso</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Access Rules</h2>
         <div className="mt-4 border-b border-slate-200">
-          <nav className="-mb-px flex items-center gap-1" aria-label="Tabs de reglas de acceso">
+          <nav className="-mb-px flex items-center gap-1" aria-label="Access rule tabs">
             <Link
               href="?tab=active"
               scroll={false}
@@ -366,7 +366,7 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
                   : "inline-flex items-center border-b-2 border-transparent px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
               }
             >
-              Activas
+              Active
             </Link>
             <Link
               href="?tab=inactive"
@@ -378,25 +378,25 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
                   : "inline-flex items-center border-b-2 border-transparent px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
               }
             >
-              Inactivas
+              Inactive
             </Link>
           </nav>
         </div>
 
         {filteredRules.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">No hay reglas de acceso registradas.</p>
+          <p className="mt-3 text-sm text-slate-600">No access rules registered.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[900px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-3 py-2 font-medium">Rule ID</th>
-                  <th className="px-3 py-2 font-medium">Usuario (Email)</th>
-                  <th className="px-3 py-2 font-medium">Rol</th>
+                  <th className="px-3 py-2 font-medium">User (Email)</th>
+                  <th className="px-3 py-2 font-medium">Role</th>
                   <th className="px-3 py-2 font-medium">Prefix</th>
-                  <th className="px-3 py-2 font-medium">Expiracion</th>
-                  <th className="px-3 py-2 font-medium">Estado</th>
-                  <th className="px-3 py-2 font-medium text-right">Accion</th>
+                  <th className="px-3 py-2 font-medium">Expiration</th>
+                  <th className="px-3 py-2 font-medium">Status</th>
+                  <th className="px-3 py-2 font-medium text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -420,15 +420,15 @@ export function AdminPanel({ users, filteredRules, activeTab, fetchError }: Admi
                       <td className="px-3 py-3">
                         {ruleIsExpired ? (
                           <span className="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
-                            Expirada
+                            Expired
                           </span>
                         ) : rule.is_active ? (
                           <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                            Activa
+                            Active
                           </span>
                         ) : (
                           <span className="inline-flex rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
-                            Inactiva
+                            Inactive
                           </span>
                         )}
                       </td>

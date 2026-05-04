@@ -34,7 +34,7 @@ export type AdminActionState = {
 };
 
 class AuthorizationError extends Error {
-  constructor(message = "No tienes permisos para ejecutar esta accion.") {
+  constructor(message = "You do not have permission to perform this action.") {
     super(message);
     this.name = "AuthorizationError";
   }
@@ -48,7 +48,7 @@ function normalizeRequiredText(value: string, fieldName: string): string {
   const normalized = value.trim();
 
   if (!normalized) {
-    throw new Error(`${fieldName} es obligatorio.`);
+    throw new Error(`${fieldName} is required.`);
   }
 
   return normalized;
@@ -59,7 +59,7 @@ function normalizeRuleId(ruleId: string): number {
   const parsed = Number.parseInt(normalized, 10);
 
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error("rule_id es invalido.");
+    throw new Error("rule_id is invalid.");
   }
 
   return parsed;
@@ -69,7 +69,7 @@ function normalizePrefix(prefix: string): string {
   const normalized = normalizeRequiredText(prefix, "recipient_prefix");
 
   if (normalized.length > MAX_PREFIX_LENGTH) {
-    throw new Error("recipient_prefix supera el maximo permitido.");
+    throw new Error("recipient_prefix exceeds the maximum length.");
   }
 
   return normalized;
@@ -87,10 +87,10 @@ function normalizeOptionalDate(value: FormDataEntryValue | null): string | null 
 
   const parsedDate = new Date(normalizedValue);
   if (Number.isNaN(parsedDate.getTime())) {
-    throw new Error("La fecha de expiración es inválida");
+    throw new Error("Invalid expiration date.");
   }
   if (parsedDate.getTime() < Date.now()) {
-    throw new Error("La fecha de expiración no puede estar en el pasado.");
+    throw new Error("Expiration date cannot be in the past.");
   }
 
   return parsedDate.toISOString();
@@ -125,7 +125,7 @@ async function requireAdminSupabaseClient(): Promise<AdminSupabaseClient> {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new AuthorizationError("Sesion invalida. Inicia sesion nuevamente.");
+    throw new AuthorizationError("Invalid session. Please sign in again.");
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -135,7 +135,7 @@ async function requireAdminSupabaseClient(): Promise<AdminSupabaseClient> {
     .maybeSingle<ProfileRow>();
 
   if (profileError) {
-    throw new Error("No se pudo validar el rol del administrador.");
+    throw new Error("Could not validate the admin role.");
   }
 
   if (!profile || profile.role !== ADMIN_ROLE) {
@@ -166,7 +166,7 @@ async function grantAccessWithClient(
     .single<AccessRuleRow>();
 
   if (error || !data) {
-    throw new Error(error?.message ?? "No se pudo crear la regla de acceso.");
+    throw new Error(error?.message ?? "Could not create access rule.");
   }
 
   return data;
@@ -185,11 +185,11 @@ async function revokeAccessWithClient(
     .maybeSingle<AccessRuleLookupRow>();
 
   if (fetchError) {
-    throw new Error(`No se pudo leer la regla: ${fetchError.message}`);
+    throw new Error(`Could not read rule: ${fetchError.message}`);
   }
 
   if (!currentRule) {
-    throw new Error("La regla indicada no existe o ya no esta disponible.");
+    throw new Error("The specified rule does not exist or is no longer available.");
   }
 
   const { data: updatedRule, error: updateError } = await supabase
@@ -200,7 +200,7 @@ async function revokeAccessWithClient(
     .single<AccessRuleLookupRow>();
 
   if (updateError || !updatedRule) {
-    throw new Error(updateError?.message ?? "No se pudo revocar la regla de acceso.");
+    throw new Error(updateError?.message ?? "Could not revoke access rule.");
   }
 
   return updatedRule;
@@ -236,7 +236,7 @@ export async function adminCreateUser(
     }
     return {
       status: "error",
-      message: "No se pudo validar la sesion del administrador."
+      message: "Could not validate the admin session."
     };
   }
 
@@ -246,21 +246,21 @@ export async function adminCreateUser(
   if (!email || !password) {
     return {
       status: "error",
-      message: "Debes completar email y contrasena."
+      message: "Email and password are required."
     };
   }
 
   if (!isValidEmail(email)) {
     return {
       status: "error",
-      message: "El email no tiene un formato valido."
+      message: "Invalid email format."
     };
   }
 
   if (password.length < MIN_PASSWORD_LENGTH) {
     return {
       status: "error",
-      message: `La contrasena debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`
+      message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
     };
   }
 
@@ -275,7 +275,7 @@ export async function adminCreateUser(
     if (error) {
       return {
         status: "error",
-        message: `No se pudo crear el usuario: ${error.message}`
+        message: `Could not create user: ${error.message}`
       };
     }
 
@@ -283,7 +283,7 @@ export async function adminCreateUser(
     if (!createdUserId) {
       return {
         status: "error",
-        message: "No se pudo obtener el ID del usuario creado en Auth."
+        message: "Could not retrieve the created user ID from Auth."
       };
     }
 
@@ -295,13 +295,13 @@ export async function adminCreateUser(
       return {
         status: "error",
         message:
-          "Se creó el usuario en Auth, pero falló la creación del perfil."
+          "User was created in Auth, but profile creation failed."
       };
     }
   } catch {
     return {
       status: "error",
-      message: "Error inesperado al crear el usuario."
+      message: "Unexpected error while creating user."
     };
   }
 
@@ -309,7 +309,7 @@ export async function adminCreateUser(
 
   return {
     status: "success",
-    message: "Usuario creado correctamente."
+    message: "User created successfully."
   };
 }
 
@@ -329,18 +329,18 @@ export async function createAccessRule(
     }
 
     if (error instanceof Error) {
-      return { status: "error", message: `No se pudo crear la regla: ${error.message}` };
+      return { status: "error", message: `Could not create rule: ${error.message}` };
     }
 
     return {
       status: "error",
-      message: "Error inesperado al crear la regla de acceso."
+      message: "Unexpected error while creating access rule."
     };
   }
 
   return {
     status: "success",
-    message: "Regla creada correctamente."
+    message: "Rule created successfully."
   };
 }
 
@@ -358,17 +358,17 @@ export async function revokeAccessRule(
     }
 
     if (error instanceof Error) {
-      return { status: "error", message: `No se pudo revocar la regla: ${error.message}` };
+      return { status: "error", message: `Could not revoke rule: ${error.message}` };
     }
 
     return {
       status: "error",
-      message: "Error inesperado al revocar la regla de acceso."
+      message: "Unexpected error while revoking access rule."
     };
   }
 
   return {
     status: "success",
-    message: "Regla revocada correctamente."
+    message: "Rule revoked successfully."
   };
 }

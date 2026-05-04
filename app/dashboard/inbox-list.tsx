@@ -39,23 +39,23 @@ function isSameCalendarDay(left: Date, right: Date): boolean {
 
 function formatFriendlyDate(value: string | null): string {
   if (!value) {
-    return "Sin fecha";
+    return "No date";
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "Sin fecha";
+    return "No date";
   }
 
   const now = new Date();
   if (isSameCalendarDay(date, now)) {
-    return "Hoy";
+    return "Today";
   }
 
   const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   yesterday.setDate(yesterday.getDate() - 1);
   if (isSameCalendarDay(date, yesterday)) {
-    return "Ayer";
+    return "Yesterday";
   }
 
   const formatOptions: Intl.DateTimeFormatOptions =
@@ -63,7 +63,7 @@ function formatFriendlyDate(value: string | null): string {
       ? { day: "2-digit", month: "short" }
       : { day: "2-digit", month: "short", year: "numeric" };
 
-  return new Intl.DateTimeFormat("es-AR", formatOptions).format(date);
+  return new Intl.DateTimeFormat("en-US", formatOptions).format(date);
 }
 
 function sanitizeEmailHtml(rawHtml: string | null): string {
@@ -174,7 +174,7 @@ function EmailViewerSlideOver({
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
-        aria-label="Cerrar visor de correo"
+        aria-label="Close email viewer"
         onClick={onClose}
       />
 
@@ -192,13 +192,13 @@ function EmailViewerSlideOver({
               {formatFriendlyDate(email.created_at)}
             </p>
             <h2 id={titleId} className="mt-1 truncate text-base font-semibold text-slate-900 sm:text-lg">
-              {email.subject || "(Sin asunto)"}
+              {email.subject || "(No subject)"}
             </h2>
             <p className="mt-1 truncate text-sm text-slate-600">
-              De: {email.sender || "(Remitente desconocido)"}
+              From: {email.sender || "(Unknown sender)"}
             </p>
             <p className="truncate text-sm text-slate-600">
-              Para: {email.recipient || "(Sin destinatario)"}
+              To: {email.recipient || "(No recipient)"}
             </p>
           </div>
 
@@ -206,7 +206,7 @@ function EmailViewerSlideOver({
             type="button"
             onClick={onClose}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-100"
-            aria-label="Cerrar"
+            aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -236,7 +236,7 @@ function EmailViewerSlideOver({
             </article>
           ) : (
             <article className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm sm:p-6">
-              Este correo no contiene contenido visible.
+              This email does not contain visible content.
             </article>
           )}
         </div>
@@ -251,9 +251,9 @@ export function InboxList({ emails }: InboxListProps) {
   if (emails.length === 0) {
     return (
       <section className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <h2 className="text-base font-semibold text-slate-800">Sin correos visibles</h2>
+        <h2 className="text-base font-semibold text-slate-800">No visible emails</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Cuando haya mensajes autorizados por RLS, apareceran aqui.
+          Authorized RLS messages will appear here when available.
         </p>
       </section>
     );
@@ -272,10 +272,10 @@ export function InboxList({ emails }: InboxListProps) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {email.sender || "(Remitente desconocido)"}
+                    {email.sender || "(Unknown sender)"}
                   </p>
                   <p className="mt-0.5 truncate text-sm text-slate-800">
-                    {email.subject || "(Sin asunto)"}
+                    {email.subject || "(No subject)"}
                   </p>
                 </div>
                 <p className="shrink-0 text-xs font-medium text-slate-500">

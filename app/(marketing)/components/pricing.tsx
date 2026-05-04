@@ -8,15 +8,15 @@ type PricingPlan = {
 const plans: PricingPlan[] = [
   {
     name: "Freelancer",
-    price: "Gratis",
-    detail: "Limitado a 5 reglas",
-    description: "Ideal para operación individual y clientes puntuales."
+    price: "Free",
+    detail: "Limited to 5 rules",
+    description: "Ideal for solo operations and occasional client workflows."
   },
   {
     name: "Agency",
-    price: "Contacto a ventas",
-    detail: "Reglas ilimitadas",
-    description: "Diseñado para equipos con múltiples cuentas y flujos escalables."
+    price: "Contact Sales",
+    detail: "Unlimited rules",
+    description: "Built for teams managing multiple accounts and scalable workflows."
   }
 ];
 
@@ -26,10 +26,10 @@ export function Pricing() {
       <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-            Planes para cada etapa de tu agencia
+            Plans for every stage of your agency
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-            Mockup comercial para evaluar el encaje operativo en entornos B2B.
+            Commercial mockup to evaluate operational fit in B2B environments.
           </p>
         </div>
 

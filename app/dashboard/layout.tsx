@@ -35,7 +35,7 @@ async function getDashboardUserContext(): Promise<DashboardUserContext> {
     .maybeSingle<ProfileRow>();
 
   if (profileError) {
-    throw new Error("No se pudo validar el perfil del usuario.");
+    throw new Error("Could not validate the user profile.");
   }
 
   return {

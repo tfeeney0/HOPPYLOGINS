@@ -5,19 +5,19 @@ type Feature = {
 
 const features: Feature[] = [
   {
-    title: "Control Centralizado",
+    title: "Centralized Control",
     description:
-      "Un solo panel para administrar todos los correos de verificación de tu agencia."
+      "One unified dashboard to manage all verification emails across your agency."
   },
   {
-    title: "Accesos Granulares y Temporales",
+    title: "Granular Temporary Access",
     description:
-      "Otorga permisos de lectura con fecha de caducidad. Revoca el acceso con un clic."
+      "Grant read access with expiration dates and revoke permissions in one click."
   },
   {
-    title: "Seguridad Enterprise",
+    title: "Enterprise Security",
     description:
-      "Tus datos protegidos por PostgreSQL RLS. Nunca exponemos credenciales maestras."
+      "Your data is protected with PostgreSQL RLS. Master credentials are never exposed."
   }
 ];
 
