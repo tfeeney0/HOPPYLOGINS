@@ -40,6 +40,13 @@ type InlineImage = {
   dataUrl: string;
 };
 
+type UploadedFileLike = {
+  arrayBuffer: () => Promise<ArrayBuffer>;
+  name: string;
+  size: number;
+  type: string;
+};
+
 class HttpError extends Error {
   public readonly status: number;
 
@@ -140,7 +147,22 @@ function parseContentIdMap(formData: FormData): Map<string, string> {
   }
 }
 
-function getImageContentType(file: File): string | null {
+function isUploadedFileLike(value: unknown): value is UploadedFileLike {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    typeof value.arrayBuffer === "function" &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "size" in value &&
+    typeof value.size === "number" &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
+}
+
+function getImageContentType(file: UploadedFileLike): string | null {
   if (IMAGE_CONTENT_TYPE_PATTERN.test(file.type)) {
     return file.type;
   }
@@ -157,7 +179,7 @@ async function readInlineImages(formData: FormData): Promise<InlineImage[]> {
   const images: InlineImage[] = [];
 
   for (const [fieldName, value] of formData.entries()) {
-    if (!(value instanceof File)) {
+    if (!isUploadedFileLike(value)) {
       continue;
     }
 
@@ -292,6 +314,17 @@ function isValidMailgunSignature(
   return timingSafeEqual(Buffer.from(received), Buffer.from(expected));
 }
 
+function isMissingBodyHtmlColumnError(error: { message?: string; code?: string }): boolean {
+  const message = error.message?.toLowerCase() ?? "";
+  return (
+    message.includes("body_html") &&
+    (message.includes("schema cache") ||
+      message.includes("column") ||
+      error.code === "PGRST204" ||
+      error.code === "42703")
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -332,13 +365,28 @@ export async function POST(request: Request) {
       }
     });
 
-    const { error } = await supabase.from("emails").insert({
+    const insertPayload = {
       sender: emailPayload.sender,
       recipient: emailPayload.recipient,
       subject: emailPayload.subject,
       body_plain: emailPayload.bodyPlain,
       body_html: emailPayload.bodyHtml
-    });
+    };
+
+    let { error } = await supabase.from("emails").insert(insertPayload);
+
+    if (error && isMissingBodyHtmlColumnError(error)) {
+      console.warn("emails.body_html is missing; saving inbound email without HTML content.");
+
+      const fallbackInsertPayload = {
+        sender: insertPayload.sender,
+        recipient: insertPayload.recipient,
+        subject: insertPayload.subject,
+        body_plain: insertPayload.body_plain
+      };
+      const fallbackResult = await supabase.from("emails").insert(fallbackInsertPayload);
+      error = fallbackResult.error;
+    }
 
     if (error) {
       console.error("Failed to insert inbound email:", error.message);
