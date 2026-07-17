@@ -72,6 +72,7 @@ function sanitizeEmailHtml(rawHtml: string | null): string {
   }
 
   return DOMPurify.sanitize(rawHtml, {
+    ADD_DATA_URI_TAGS: ["img"],
     USE_PROFILES: { html: true }
   });
 }

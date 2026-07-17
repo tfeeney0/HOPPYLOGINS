@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { adminCreateUser, createAccessRule, revokeAccessRule } from "./actions";
 import type { AdminActionState } from "./actions";
@@ -124,11 +124,7 @@ function SubmitButton({
 function CreateAccessRuleForm({ users }: { users: AdminPanelUser[] }) {
   const [state, formAction] = useActionState(createAccessRule, INITIAL_ACTION_STATE);
   const hasUsers = users.length > 0;
-  const [minExpiresAt, setMinExpiresAt] = useState<string>("");
-
-  useEffect(() => {
-    setMinExpiresAt(getLocalDateTimeMinValue(new Date()));
-  }, []);
+  const [minExpiresAt] = useState(() => getLocalDateTimeMinValue(new Date()));
 
   return (
     <form action={formAction} className="space-y-4">
@@ -285,7 +281,7 @@ function RevokeRuleForm({ ruleId, isActive }: { ruleId: number; isActive: boolea
 }
 
 export function AdminPanel({ users, filteredRules, activeTab, fetchError }: AdminPanelProps) {
-  const nowTimestamp = Date.now();
+  const [nowTimestamp] = useState(() => Date.now());
 
   return (
     <section className="space-y-6">
